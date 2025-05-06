@@ -12,6 +12,29 @@ import requests
 logger = logging.getLogger(__name__)
 
 
+def common_prompt(text: str = None) -> str:
+    if text is None:
+        core_text = "Extract task information from user message."
+    else:
+        core_text = f"Extract task information from this message: '{text}'"
+
+    return f"""\
+{core_text}
+Identify if the user wants to create a task, a new calendar event, or to set a reminder.
+Dates can never be set to the past, it does not make sense.
+Extact the date and time from the 'title' field if possible.
+
+Return ONLY a JSON object with:
+{{
+    "task_type": "task", "event", or "reminder",
+    "title": "brief title",
+    "description": "detailed description",
+    "date": "YYYY-MM-DD" (extract date or use today if not specified),
+    "time": "HH:MM" (extract time or null if not specified)
+}}
+"""
+
+
 class LLMProvider(abc.ABC):
     """Abstract base class for LLM providers."""
 
@@ -54,18 +77,7 @@ class OpenAIProvider(LLMProvider):
                 "messages": [
                     {
                         "role": "system",
-                        "content": """
-                    Extract task information from the user message.
-                    Identify if it's a task, calendar event, or reminder.
-                    Return a JSON object with:
-                    {
-                        "task_type": "task", "event", or "reminder",
-                        "title": "brief title",
-                        "description": "detailed description",
-                        "date": "YYYY-MM-DD" (extract date or use today if not specified),
-                        "time": "HH:MM" (extract time or null if not specified)
-                    }
-                    """,
+                        "content": common_prompt(),
                     },
                     {"role": "user", "content": text},
                 ],
@@ -125,18 +137,7 @@ class AnthropicProvider(LLMProvider):
             json={
                 "model": "claude-instant-1.2",
                 "max_tokens": 300,
-                "system": """
-                Extract task information from the user message.
-                Identify if it's a task, calendar event, or reminder.
-                Return ONLY a JSON object with:
-                {
-                    "task_type": "task", "event", or "reminder",
-                    "title": "brief title",
-                    "description": "detailed description",
-                    "date": "YYYY-MM-DD" (extract date or use today if not specified),
-                    "time": "HH:MM" (extract time or null if not specified)
-                }
-                """,
+                "system": common_prompt(),
                 "messages": [{"role": "user", "content": text}],
             },
         )
@@ -180,18 +181,7 @@ class GeminiProvider(LLMProvider):
                     {
                         "parts": [
                             {
-                                "text": f"""
-                                Extract task information from this message: "{text}"
-                                Identify if it's a task, calendar event, or reminder.
-                                Return ONLY a JSON object with:
-                                {{
-                                    "task_type": "task", "event", or "reminder",
-                                    "title": "brief title",
-                                    "description": "detailed description",
-                                    "date": "YYYY-MM-DD" (extract date or use today if not specified),
-                                    "time": "HH:MM" (extract time or null if not specified)
-                                }}
-                                """
+                                "text": common_prompt(text)
                             }
                         ]
                     }
