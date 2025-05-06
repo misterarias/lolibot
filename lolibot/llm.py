@@ -1,46 +1,52 @@
 """LLM processing module for natural language understanding."""
+
+import abc
 import logging
+import random
 import re
 import json
 from datetime import datetime, timedelta
 import requests
-from lolibot.config import LLM_API_KEY, LLM_PROVIDER
+
 
 logger = logging.getLogger(__name__)
 
 
-class LLMProcessor:
-    """Process natural language using LLM APIs."""
+class LLMProvider(abc.ABC):
+    """Abstract base class for LLM providers."""
 
-    @staticmethod
-    def process_text(text):
-        """
-        Process text with the configured LLM to extract task information.
-        Returns structured data about the task.
-        """
-        try:
-            if LLM_PROVIDER == "openai":
-                return _process_with_openai(text)
-            elif LLM_PROVIDER == "anthropic":
-                return _process_with_anthropic(text)
-            elif LLM_PROVIDER == "gemini":
-                return _process_with_gemini(text)
-            else:
-                # Fallback to regex-based parsing if no LLM is configured
-                return _process_with_regex(text)
-        except Exception as e:
-            logger.error(f"Error processing text with LLM: {e}")
-            # Fallback to regex-based parsing if LLM fails
-            return _process_with_regex(text)
+    @abc.abstractmethod
+    def name(self) -> str:
+        """Return the name of the LLM provider."""
+        pass
+
+    @abc.abstractmethod
+    def process_text(self, text) -> dict:
+        """Process text using the LLM provider."""
+        pass
+
+    @abc.abstractmethod
+    def check_connection(self) -> bool:
+        pass
 
 
-def _process_with_openai(text):
-    """Process text with OpenAI API."""
-    try:
+class OpenAIProvider(LLMProvider):
+    """OpenAI LLM provider."""
+
+    def name(self) -> str:
+        return "OpenAI"
+
+    def __init__(self):
+        from lolibot.config import OPENAPI_API_KEY
+
+        self.__api_key = OPENAPI_API_KEY
+
+    def process_text(self, text) -> dict:
+        """Process text with OpenAI API."""
         response = requests.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {LLM_API_KEY}",
+                "Authorization": f"Bearer {self.__api_key}",
                 "Content-Type": "application/json",
             },
             json={
@@ -72,18 +78,47 @@ def _process_with_openai(text):
         if "error" in result:
             raise Exception(result["error"]["message"])
         return json.loads(result["choices"][0]["message"]["content"])
-    except Exception as e:
-        logger.error(f"Error processing with OpenAI: {e}")
-        return _process_with_regex(text)
+
+    def check_connection(self) -> bool:
+        """Ping OpenAI API to check if it's reachable."""
+        try:
+            response = requests.get("https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {self.__api_key}"})
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"Error pinging OpenAI: {e}")
+            return False
 
 
-def _process_with_anthropic(text):
-    """Process text with Anthropic Claude API."""
-    try:
+class AnthropicProvider(LLMProvider):
+    """Anthropic LLM provider."""
+
+    def name(self):
+        return "Anthropic"
+
+    def __init__(self):
+        from lolibot.config import CLAUDE_API_KEY
+
+        self.__api_key = CLAUDE_API_KEY
+
+    def check_connection(self):
+        try:
+            response = requests.get("https://api.anthropic.com/v1/models", headers={
+                "x-api-key": self.__api_key,
+                "anthropic-version": "2023-06-01",
+                "Content-Type": "application/json",
+            })
+            logger.debug(f"Anthropic response: {response.json()}")
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"Error pinging Claude: {e}")
+            return False
+
+    def process_text(self, text) -> dict:
+        """Process text with Anthropic API."""
         response = requests.post(
-            "https://api.anthropic.com/v1/messages",
+            "https://api.anthropic.com/v1/complete",
             headers={
-                "x-api-key": LLM_API_KEY,
+                "x-api-key": self.__api_key,
                 "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json",
             },
@@ -106,22 +141,39 @@ def _process_with_anthropic(text):
             },
         )
         result = response.json()
+        logger.debug(f"Anthropic response: {result}")
+
         # Extract the JSON from the text
         content = result["content"][0]["text"]
         match = re.search(r"{.*}", content, re.DOTALL)
         if match:
             return json.loads(match.group(0))
-        return _process_with_regex(text)
-    except Exception as e:
-        logger.error(f"Error processing with Anthropic: {e}")
-        return _process_with_regex(text)
+        raise Exception("Failed to extract JSON from response")
 
 
-def _process_with_gemini(text):
-    """Process text with Google Gemini API."""
-    try:
+class GeminiProvider(LLMProvider):
+    """Google Gemini LLM provider."""
+
+    def name(self):
+        return "Gemini"
+
+    def __init__(self):
+        from lolibot.config import GEMINI_API_KEY
+
+        self.__api_key = GEMINI_API_KEY
+
+    def check_connection(self):
+        try:
+            response = requests.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={self.__api_key}")
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"Error pinging Gemini: {e}")
+            return False
+
+    def process_text(self, text) -> dict:
+        """Process text with Google Gemini API."""
         response = requests.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={LLM_API_KEY}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self.__api_key}",
             headers={"Content-Type": "application/json"},
             json={
                 "contents": [
@@ -148,90 +200,124 @@ def _process_with_gemini(text):
             },
         )
         result = response.json()
+        logger.debug(f"Gemini response: {result}")
+
         content = result["candidates"][0]["content"]["parts"][0]["text"]
         # Extract the JSON from the text
         match = re.search(r"{.*}", content, re.DOTALL)
         if match:
             return json.loads(match.group(0))
-        return _process_with_regex(text)
-    except Exception as e:
-        logger.error(f"Error processing with Gemini: {e}")
-        return _process_with_regex(text)
+        raise Exception("Failed to extract JSON from response")
 
 
-def _process_with_regex(text):
-    """
-    Fallback method using regex patterns to extract task info
-    when LLM processing fails or is not configured.
-    """
-    # Default values
-    today = datetime.now().strftime("%Y-%m-%d")
+class DefaultProvider(LLMProvider):
+    """Default LLM provider for regex-based parsing."""
 
-    result = {
-        "task_type": "task",  # Default to task
-        "title": text[:50] + ("..." if len(text) > 50 else ""),
-        "description": text,
-        "date": today,
-        "time": None,
-    }
+    def name(self) -> str:
+        return "RegexBased"
 
-    # Try to extract dates
-    date_patterns = [
-        r"(today|tomorrow|next\s+monday|next\s+tuesday|next\s+wednesday|next\s+thursday|next\s+friday|next\s+saturday|next\s+sunday)",
-        r"(\d{1,2}(?:st|nd|rd|th)?\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?))",
-        r"(\d{4}-\d{2}-\d{2})",
-        r"(\d{1,2}/\d{1,2}/\d{2,4})",
-    ]
+    def check_connection(self):
+        return True  # Always reachable
 
-    for pattern in date_patterns:
-        match = re.search(pattern, text.lower())
-        if match:
-            date_str = match.group(1)
-            # Convert to YYYY-MM-DD format...
-            # This is simplified - a real implementation would handle
-            # all date formats properly
-            if date_str == "today":
-                result["date"] = today
-            elif date_str == "tomorrow":
-                result["date"] = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-            elif date_str.startswith("next"):
-                # Handle "next Monday", etc.
-                day_name = date_str.split()[1]
-                # Map day names to numbers
-                day_map = {
-                    "monday": 0,
-                    "tuesday": 1,
-                    "wednesday": 2,
-                    "thursday": 3,
-                    "friday": 4,
-                    "saturday": 5,
-                    "sunday": 6,
-                }
-                target_day = day_map.get(day_name, 0)
-                current_day = datetime.now().weekday()
-                days_ahead = target_day - current_day
-                if days_ahead <= 0:  # Target day already happened this week
-                    days_ahead += 7
-                result["date"] = (datetime.now() + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
-            break
+    def process_text(self, text) -> dict:
+        """
+        Fallback method using regex patterns to extract task info
+        when LLM processing fails or is not configured.
+        """
+        # Default values
+        today = datetime.now().strftime("%Y-%m-%d")
 
-    # Try to extract time
-    time_pattern = r"(\d{1,2}):(\d{2})(?:\s*(am|pm))?"
-    time_match = re.search(time_pattern, text.lower())
-    if time_match:
-        hour, minute, ampm = time_match.groups()
-        hour = int(hour)
-        if ampm == "pm" and hour < 12:
-            hour += 12
-        elif ampm == "am" and hour == 12:
-            hour = 0
-        result["time"] = f"{hour:02d}:{minute}"
+        result = {
+            "task_type": "task",  # Default to task
+            "title": text[:50] + ("..." if len(text) > 50 else ""),
+            "description": text,
+            "date": today,
+            "time": None,
+        }
 
-    # Try to identify task type
-    if re.search(r"meet(?:ing)?|call|discuss|talk|conversation", text.lower()):
-        result["task_type"] = "event"
-    elif re.search(r"remind(?:er)?|alert|notify", text.lower()):
-        result["task_type"] = "reminder"
+        # Try to extract dates
+        date_patterns = [
+            r"(today|tomorrow|next\s+monday|next\s+tuesday|next\s+wednesday|next\s+thursday|next\s+friday|next\s+saturday|next\s+sunday)",
+            r"(\d{1,2}(?:st|nd|rd|th)?\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?))",
+            r"(\d{4}-\d{2}-\d{2})",
+            r"(\d{1,2}/\d{1,2}/\d{2,4})",
+        ]
 
-    logger.info(f"Regex processing result: {result}")
-    return result
+        for pattern in date_patterns:
+            match = re.search(pattern, text.lower())
+            if match:
+                date_str = match.group(1)
+                # Convert to YYYY-MM-DD format...
+                # This is simplified - a real implementation would handle
+                # all date formats properly
+                if date_str == "today":
+                    result["date"] = today
+                elif date_str == "tomorrow":
+                    result["date"] = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+                elif date_str.startswith("next"):
+                    # Handle "next Monday", etc.
+                    day_name = date_str.split()[1]
+                    # Map day names to numbers
+                    day_map = {
+                        "monday": 0,
+                        "tuesday": 1,
+                        "wednesday": 2,
+                        "thursday": 3,
+                        "friday": 4,
+                        "saturday": 5,
+                        "sunday": 6,
+                    }
+                    target_day = day_map.get(day_name, 0)
+                    current_day = datetime.now().weekday()
+                    days_ahead = target_day - current_day
+                    if days_ahead <= 0:  # Target day already happened this week
+                        days_ahead += 7
+                    result["date"] = (datetime.now() + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
+                break
+
+        # Try to extract time
+        time_pattern = r"(\d{1,2}):(\d{2})(?:\s*(am|pm))?"
+        time_match = re.search(time_pattern, text.lower())
+        if time_match:
+            hour, minute, ampm = time_match.groups()
+            hour = int(hour)
+            if ampm == "pm" and hour < 12:
+                hour += 12
+            elif ampm == "am" and hour == 12:
+                hour = 0
+            result["time"] = f"{hour:02d}:{minute}"
+
+        # Try to identify task type
+        if re.search(r"meet(?:ing)?|call|discuss|talk|conversation", text.lower()):
+            result["task_type"] = "event"
+        elif re.search(r"remind(?:er)?|alert|notify", text.lower()):
+            result["task_type"] = "reminder"
+
+        logger.info(f"Regex processing result: {result}")
+        return result
+
+
+class LLMProcessor:
+    """Process natural language using LLM APIs."""
+
+    PROVIDERS = [OpenAIProvider(), AnthropicProvider(), GeminiProvider()]
+
+    def process_text(self, text) -> dict:
+        """
+        Randomly select first working LLM
+        """
+        llm_providers = random.sample(self.PROVIDERS, len(self.PROVIDERS))
+        response = None
+        for provider in llm_providers:
+            logger.info(f"Using LLM provider: {provider.name()}")
+            try:
+                response = provider.process_text(text)
+                break
+            except Exception as e:
+                logger.warning(f"Error processing text with {provider.name()}: {e}")
+                continue
+
+        if not response:
+            logger.error("All LLM providers failed. Falling back to regex-based parsing.")
+            return DefaultProvider().process_text(text)
+        return response

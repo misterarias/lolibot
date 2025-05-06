@@ -1,4 +1,5 @@
 """Task management module for handling tasks, events, and reminders."""
+
 import logging
 from lolibot import UnknownTaskException
 from lolibot.google_api import create_task, create_calendar_event, create_reminder
@@ -46,7 +47,7 @@ class TaskManager:
             confirmation = "Reminder set"
         else:
             raise UnknownTaskException(f"Unknown task type: {task_data['task_type']}")
-            
+
         # Save to local database
         TaskManager.save_to_db(user_id, message, task_data, google_id)
 

@@ -1,8 +1,8 @@
 """Telegram bot handlers module."""
+
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-from lolibot.config import LLM_API_KEY, LLM_PROVIDER
 from lolibot.llm import LLMProcessor
 from lolibot.task_manager import TaskManager
 from lolibot.google_api import get_google_service
@@ -62,10 +62,12 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message.append(f"❌ Not connected to Google Tasks: {str(e)}")
 
     # Check LLM API connection
-    if LLM_API_KEY:
-        message.append(f"✅ LLM Provider configured: {LLM_PROVIDER}")
-    else:
-        message.append("⚠️ No LLM API configured, using fallback regex parser")
+    llm_processor = LLMProcessor()
+    for provider in llm_processor.PROVIDERS:
+        if provider.check_connection():
+            message.append(f"✅ Connected to {provider.name()} API")
+        else:
+            message.append(f"❌ Not connected to {provider.name()} API")
 
     await update.message.reply_text("\n".join(message))
 
@@ -80,7 +82,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Processing your request...")
 
     # Extract task information using LLM
-    task_data = LLMProcessor.process_text(user_message)
+    task_data = LLMProcessor().process_text(user_message)
 
     # Process the task and get response
     response = TaskManager.process_task(user_id, user_message, task_data)

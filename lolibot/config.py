@@ -1,4 +1,5 @@
 """Configuration module for the Task Manager Bot."""
+
 import os
 import logging
 from dotenv import load_dotenv
@@ -14,6 +15,11 @@ logging.basicConfig(
     level=log_level,
 )
 
+# supress some  library logs
+for lib in ["googleapiclient", "google_auth_httplib2", "google_auth_oauthlib", "httpx", "httpcore", "telegram.ext"]:
+    logging.getLogger(lib).setLevel(logging.WARNING)
+
+
 # Google API scopes
 SCOPES = [
     "https://www.googleapis.com/auth/calendar",
@@ -24,9 +30,9 @@ SCOPES = [
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # LLM API settings
-LLM_API_KEY = os.getenv("LLM_API_KEY")
-LLM_API_URL = os.getenv("LLM_API_URL")
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")  # openai, anthropic, or gemini
+OPENAPI_API_KEY = os.getenv("OPENAPI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 
 # Time zone setting
 DEFAULT_TIMEZONE = os.getenv("DEFAULT_TIMEZONE", "UTC")

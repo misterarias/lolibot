@@ -1,4 +1,5 @@
 """Database handling module for the Task Manager Bot."""
+
 import logging
 import sqlite3
 from lolibot.config import DB_PATH
