@@ -1,7 +1,9 @@
 """Task management module for handling tasks, events, and reminders."""
-from lolibot.config import logger
+import logging
 from lolibot.google_api import create_task, create_calendar_event, create_reminder
 from lolibot.db import save_task_to_db
+
+logger = logging.getLogger(__name__)
 
 
 class TaskManager:
