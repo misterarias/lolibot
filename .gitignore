@@ -2,3 +2,5 @@
 __pycache__
 taskbot.db
 credentials.json
+token_calendar.json
+token_tasks.json
