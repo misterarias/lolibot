@@ -1,4 +1,5 @@
 """Google API integration module for the Task Manager Bot."""
+import logging
 import os
 import json
 from datetime import datetime, timedelta
@@ -7,7 +8,9 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from lolibot.config import SCOPES, DEFAULT_TIMEZONE, logger
+from lolibot.config import SCOPES, DEFAULT_TIMEZONE
+
+logger = logging.getLogger(__name__)
 
 
 def get_google_service(service_name):

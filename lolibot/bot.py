@@ -1,10 +1,13 @@
 """Telegram bot handlers module."""
+import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-from lolibot.config import logger, LLM_API_KEY, LLM_PROVIDER
+from lolibot.config import LLM_API_KEY, LLM_PROVIDER
 from lolibot.llm import LLMProcessor
 from lolibot.task_manager import TaskManager
 from lolibot.google_api import get_google_service
+
+logger = logging.getLogger(__name__)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

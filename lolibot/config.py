@@ -13,7 +13,6 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=log_level,
 )
-logger = logging.getLogger(__name__)
 
 # Google API scopes
 SCOPES = [

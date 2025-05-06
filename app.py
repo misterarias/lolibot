@@ -3,15 +3,18 @@
 Task Manager Bot - Main Application
 A bot that processes natural language to create tasks, calendar events, and reminders.
 """
+import logging
 from telegram.ext import (
     Application,
     CommandHandler,
     MessageHandler,
     filters,
 )
-from lolibot.config import logger, TELEGRAM_BOT_TOKEN
+from lolibot.config import TELEGRAM_BOT_TOKEN
 from lolibot.db import init_db
 from lolibot.bot import start, help_command, status, handle_message
+
+logger = logging.getLogger(__name__)
 
 
 def main():
