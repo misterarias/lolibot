@@ -60,9 +60,9 @@ class OpenAIProvider(LLMProvider):
         return "OpenAI"
 
     def __init__(self):
-        from lolibot.config import OPENAPI_API_KEY
+        from lolibot.config import OPENAI_API_KEY
 
-        self.__api_key = OPENAPI_API_KEY
+        self.__api_key = OPENAI_API_KEY
 
     def process_text(self, text) -> dict:
         """Process text with OpenAI API."""
