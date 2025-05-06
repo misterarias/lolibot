@@ -114,11 +114,14 @@ class AnthropicProvider(LLMProvider):
 
     def check_connection(self):
         try:
-            response = requests.get("https://api.anthropic.com/v1/models", headers={
-                "x-api-key": self.__api_key,
-                "anthropic-version": "2023-06-01",
-                "Content-Type": "application/json",
-            })
+            response = requests.get(
+                "https://api.anthropic.com/v1/models",
+                headers={
+                    "x-api-key": self.__api_key,
+                    "anthropic-version": "2023-06-01",
+                    "Content-Type": "application/json",
+                },
+            )
             logger.debug(f"Anthropic response: {response.json()}")
             return response.status_code == 200
         except Exception as e:
@@ -177,15 +180,7 @@ class GeminiProvider(LLMProvider):
             f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self.__api_key}",
             headers={"Content-Type": "application/json"},
             json={
-                "contents": [
-                    {
-                        "parts": [
-                            {
-                                "text": common_prompt(text)
-                            }
-                        ]
-                    }
-                ],
+                "contents": [{"parts": [{"text": common_prompt(text)}]}],
                 "generationConfig": {"temperature": 0.2},
             },
         )
