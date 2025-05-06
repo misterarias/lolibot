@@ -11,6 +11,8 @@ from googleapiclient.discovery import build
 from lolibot.config import SCOPES, DEFAULT_TIMEZONE
 
 logger = logging.getLogger(__name__)
+default_tz = pytz.timezone(DEFAULT_TIMEZONE)
+tz = str(default_tz)
 
 
 def get_google_service(service_name):
@@ -60,6 +62,7 @@ def create_task(task_data):
             "notes": task_data["description"],
             "due": f"{task_data['date']}T23:59:59Z" if task_data["date"] else None,
         }
+        logger.info(f"Creating task: {task}")
 
         result = service.tasks().insert(tasklist=task_list_id, body=task).execute()
 
@@ -75,7 +78,6 @@ def create_calendar_event(event_data):
         service = get_google_service("calendar")
 
         # Set the start and end times
-        tz = pytz.timezone(DEFAULT_TIMEZONE)
         start_time = event_data["time"] if event_data["time"] else "09:00"
         start_datetime = f"{event_data['date']}T{start_time}:00"
 
@@ -89,14 +91,15 @@ def create_calendar_event(event_data):
             "description": event_data["description"],
             "start": {
                 "dateTime": start_datetime,
-                "timeZone": DEFAULT_TIMEZONE,
+                "timeZone": tz,
             },
             "end": {
                 "dateTime": end_datetime,
-                "timeZone": DEFAULT_TIMEZONE,
+                "timeZone": tz,
             },
             "reminders": {"useDefault": True},
         }
+        logger.info(f"Creating event: {event}")
 
         result = service.events().insert(calendarId="primary", body=event).execute()
 
@@ -125,17 +128,18 @@ def create_reminder(reminder_data):
             "description": reminder_data["description"],
             "start": {
                 "dateTime": reminder_datetime,
-                "timeZone": DEFAULT_TIMEZONE,
+                "timeZone": tz,
             },
             "end": {
                 "dateTime": end_datetime,
-                "timeZone": DEFAULT_TIMEZONE,
+                "timeZone": tz,
             },
             "reminders": {
                 "useDefault": False,
                 "overrides": [{"method": "popup", "minutes": 0}],
             },
         }
+        logger.info(f"Creating reminder: {event}")
 
         result = service.events().insert(calendarId="primary", body=event).execute()
 
