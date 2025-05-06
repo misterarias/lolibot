@@ -3,7 +3,7 @@
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-from lolibot.llm import LLMProcessor
+from lolibot.llm.processor import LLMProcessor
 from lolibot.task_manager import TaskManager
 from lolibot.google_api import get_google_service
 
