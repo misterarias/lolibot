@@ -7,6 +7,7 @@ def init_db():
     """Initialize the SQLite database."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    logger.debug("Initializing database...")
     cursor.execute(
         """
     CREATE TABLE IF NOT EXISTS tasks (
@@ -32,6 +33,7 @@ def save_task_to_db(user_id, message, task_data, google_id=None):
     """Save task information to the local database."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    logger.debug("Saving task to database...")
 
     cursor.execute(
         """
@@ -52,6 +54,7 @@ def save_task_to_db(user_id, message, task_data, google_id=None):
             bool(google_id),
         ),
     )
+    logger.debug("Task saved to database with ID: %s", cursor.lastrowid)
 
     conn.commit()
     conn.close()

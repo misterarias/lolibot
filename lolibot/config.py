@@ -7,7 +7,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
+debug_mode = os.getenv("DEBUG_MODE", "false").lower() == "true"
+log_level = logging.DEBUG if debug_mode else logging.INFO
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=log_level,
+)
 logger = logging.getLogger(__name__)
 
 # Google API scopes

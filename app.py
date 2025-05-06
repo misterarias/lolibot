@@ -3,7 +3,6 @@
 Task Manager Bot - Main Application
 A bot that processes natural language to create tasks, calendar events, and reminders.
 """
-import os
 from telegram.ext import (
     Application,
     CommandHandler,

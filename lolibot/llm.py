@@ -1,9 +1,12 @@
 """LLM processing module for natural language understanding."""
+import logging
 import re
 import json
 from datetime import datetime, timedelta
 import requests
-from lolibot.config import LLM_API_KEY, LLM_API_URL, LLM_PROVIDER, logger
+from lolibot.config import LLM_API_KEY, LLM_PROVIDER
+
+logger = logging.getLogger(__name__)
 
 
 class LLMProcessor:
@@ -15,14 +18,19 @@ class LLMProcessor:
         Process text with the configured LLM to extract task information.
         Returns structured data about the task.
         """
-        if LLM_PROVIDER == "openai":
-            return _process_with_openai(text)
-        elif LLM_PROVIDER == "anthropic":
-            return _process_with_anthropic(text)
-        elif LLM_PROVIDER == "gemini":
-            return _process_with_gemini(text)
-        else:
-            # Fallback to regex-based parsing if no LLM is configured
+        try:
+            if LLM_PROVIDER == "openai":
+                return _process_with_openai(text)
+            elif LLM_PROVIDER == "anthropic":
+                return _process_with_anthropic(text)
+            elif LLM_PROVIDER == "gemini":
+                return _process_with_gemini(text)
+            else:
+                # Fallback to regex-based parsing if no LLM is configured
+                return _process_with_regex(text)
+        except Exception as e:
+            logger.error(f"Error processing text with LLM: {e}")
+            # Fallback to regex-based parsing if LLM fails
             return _process_with_regex(text)
 
 
@@ -60,6 +68,9 @@ def _process_with_openai(text):
             },
         )
         result = response.json()
+        logger.debug(f"OpenAI response: {result}")
+        if "error" in result:
+            raise Exception(result["error"]["message"])
         return json.loads(result["choices"][0]["message"]["content"])
     except Exception as e:
         logger.error(f"Error processing with OpenAI: {e}")
@@ -222,4 +233,5 @@ def _process_with_regex(text):
     elif re.search(r"remind(?:er)?|alert|notify", text.lower()):
         result["task_type"] = "reminder"
 
+    logger.info(f"Regex processing result: {result}")
     return result

@@ -40,6 +40,8 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Check the connection status to Google services."""
     message = []
 
+    logger.info("Checking connection status...")
+
     # Check Calendar connection
     try:
         calendar = get_google_service("calendar")
@@ -69,6 +71,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Process incoming messages."""
     user_message = update.message.text
     user_id = update.effective_user.id
+    logger.debug(f"Received message from user {user_id}: {user_message}")
 
     # Inform the user that we're processing their message
     await update.message.reply_text("Processing your request...")

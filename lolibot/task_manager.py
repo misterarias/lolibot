@@ -61,5 +61,5 @@ class TaskManager:
                 f"I understood your request, but couldn't create the {task_data['task_type']} "
                 f"in Google. I've saved it locally and will retry later."
             )
-
+        logger.debug(f"Response message: {response}")
         return response
