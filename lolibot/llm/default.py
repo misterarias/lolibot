@@ -1,4 +1,5 @@
 """Default provider implementation using regex-based parsing."""
+
 import logging
 import re
 from datetime import datetime, timedelta

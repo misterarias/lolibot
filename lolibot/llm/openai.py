@@ -1,4 +1,5 @@
 """OpenAI provider implementation."""
+
 import json
 import logging
 import requests

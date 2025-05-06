@@ -16,6 +16,22 @@ default_tz = pytz.timezone(DEFAULT_TIMEZONE)
 tz = str(default_tz)
 
 
+def validate_task(task_data) -> dict:
+    # Add flair to the task title
+    task_data["title"] = f"[LOLI] {task_data['title']}"
+
+    # make sure date is older than current date
+    if task_data["date"]:
+        try:
+            task_date = datetime.strptime(task_data["date"], "%Y-%m-%d").date()
+            if task_date < datetime.now().date():
+                raise ValueError("Task date cannot be in the past.")
+        except ValueError as e:
+            logger.error(f"Invalid date format: {e}")
+            raise
+    return task_data
+
+
 def get_google_service(service_name):
     """Get authenticated Google API service."""
     creds = None
@@ -58,6 +74,7 @@ def create_task(task_data):
             task_list_id = task_lists["items"][0]["id"]
 
         # Create the task
+        task_data = validate_task(task_data)
         task = {
             "title": task_data["title"],
             "notes": task_data["description"],
@@ -87,6 +104,7 @@ def create_calendar_event(event_data):
         end_datetime = end_datetime + timedelta(minutes=30)
         end_datetime = end_datetime.isoformat()
 
+        event_data = validate_task(event_data)
         event = {
             "summary": event_data["title"],
             "description": event_data["description"],
@@ -124,6 +142,7 @@ def create_reminder(reminder_data):
         end_datetime = end_datetime + timedelta(minutes=15)
         end_datetime = end_datetime.isoformat()
 
+        reminder_data = validate_task(reminder_data)
         event = {
             "summary": f"REMINDER: {reminder_data['title']}",
             "description": reminder_data["description"],

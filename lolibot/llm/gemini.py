@@ -1,4 +1,5 @@
 """Google Gemini provider implementation."""
+
 import json
 import logging
 import re
@@ -33,10 +34,7 @@ class GeminiProvider(LLMProvider):
         response = requests.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self.__api_key}",
             headers={"Content-Type": "application/json"},
-            json={
-                "contents": [{"parts": [{"text": common_prompt(text)}]}],
-                "generationConfig": {"temperature": 0.2},
-            },
+            json={"contents": [{"parts": [{"text": text}]}]},
         )
         result = response.json()
         logger.debug(f"Gemini response: {result}")
