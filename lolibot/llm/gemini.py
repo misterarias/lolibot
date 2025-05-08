@@ -5,7 +5,6 @@ import logging
 import re
 import requests
 from .base import LLMProvider
-from .prompts import common_prompt
 
 logger = logging.getLogger(__name__)
 

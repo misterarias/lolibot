@@ -7,8 +7,7 @@ Available interfaces:
 - Command-line interface
 """
 import click
-from lolibot.cli import cli
-from lolibot.telegram import run_telegram_bot
+from lolibot.cli.commands import create, status, telegram
 
 
 @click.group()
@@ -17,14 +16,10 @@ def main():
     pass
 
 
-# Add the CLI commands as a subgroup
-main.add_command(cli, name="cli")
-
-
-@main.command()
-def bot():
-    """Start the Telegram bot."""
-    run_telegram_bot()
+# Add the CLI commands directly
+main.add_command(create)
+main.add_command(status)
+main.add_command(telegram)
 
 
 if __name__ == "__main__":
