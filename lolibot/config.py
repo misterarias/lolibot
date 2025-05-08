@@ -1,28 +1,62 @@
-"""Configuration module for the Task Manager Bot."""
+"""Configuration module ."""
 
-import os
-from dotenv import load_dotenv
+from dataclasses import dataclass
+import logging
+from typing import Optional
+import tomli
+from pathlib import Path
 
-# Load environment variables
-load_dotenv()
+logger = logging.getLogger(__name__)
 
 
-# Google API scopes
-SCOPES = [
-    "https://www.googleapis.com/auth/calendar",
-    "https://www.googleapis.com/auth/tasks",
-]
+@dataclass(frozen=True)
+class BotConfig:
+    """Bot configuration loaded from TOML file."""
 
-# Telegram Bot settings
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    bot_name: str
+    default_timezone: str
+    context_name: str
+    openai_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
+    claude_api_key: Optional[str] = None
+    telegram_bot_token: Optional[str] = None
 
-# LLM API settings
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 
-# Time zone setting
-DEFAULT_TIMEZONE = os.getenv("DEFAULT_TIMEZONE", "UTC")
+def load_config(config_path: Path = Path("config.toml")) -> BotConfig:
+    """Load configuration from TOML file.
+    Args:
+        config_path: Path to the TOML configuration file
 
-# SQLite DB for persistence
-DB_PATH = os.getenv("DB_PATH", "./taskbot.db")
+    Returns:
+        BotConfig object with the loaded configuration
+    """
+    if not config_path.exists():
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+    
+    with open(config_path, "rb") as f:
+        config_data = tomli.load(f)
+
+    # Get the current context
+    lolibot_config = config_data.get("lolibot", {})
+    context_name = lolibot_config.get("current_context", "default")
+
+    # Get base configuration
+    base_config = {
+        "bot_name": lolibot_config.get("bot_name"),
+        "default_timezone": lolibot_config.get("default_timezone"),
+        "context_name": context_name,
+    }
+
+    # merge base with default context configuration
+    default_context = config_data.get("context", {}).get("default", {})
+    base_config = {**base_config, **default_context}
+
+    # Get context-specific configuration
+    context_config = config_data.get("context", {}).get(context_name, {})
+
+    # Merge configurations
+    final_config = {**base_config, **context_config}
+
+    logger.info(f"Loaded configuration for context: {context_name}: {final_config}")
+
+    return BotConfig(**final_config)

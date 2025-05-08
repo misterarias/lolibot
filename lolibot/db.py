@@ -2,9 +2,13 @@
 
 import logging
 import sqlite3
-from lolibot.config import DB_PATH
+import os
 
 logger = logging.getLogger(__name__)
+
+
+# SQLite DB for persistence
+DB_PATH = os.getenv("DB_PATH", "./taskbot.db")
 
 
 def init_db():

@@ -2,25 +2,26 @@
 
 import logging
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
-from ..config import TELEGRAM_BOT_TOKEN
+
+from lolibot.config import BotConfig
 from ..db import init_db
 from ..bot import start, help_command, status, handle_message
 
 logger = logging.getLogger(__name__)
 
 
-def run_telegram_bot():
+def run_telegram_bot(config: BotConfig):
     """Start the Telegram bot."""
     # Initialize database
     init_db()
 
     # Check bot token
-    if not TELEGRAM_BOT_TOKEN:
+    if not config.telegram_bot_token:
         logger.error("No Telegram bot token provided")
         return
 
     # Initialize the bot
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    application = Application.builder().token(config.telegram_bot_token).build()
 
     # Add command handlers
     application.add_handler(CommandHandler("start", start))

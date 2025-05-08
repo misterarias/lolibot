@@ -41,8 +41,8 @@ def main(verbose):
 
 # Add the CLI commands directly
 main.add_command(create)
-main.add_command(status)
 main.add_command(telegram)
+main.add_command(status)
 
 
 if __name__ == "__main__":

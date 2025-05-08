@@ -2,6 +2,7 @@
 
 import click
 
+from lolibot.config import BotConfig, load_config
 from lolibot.telegram.bot import run_telegram_bot
 from ..llm.processor import LLMProcessor
 from ..task_manager import TaskManager
@@ -28,9 +29,12 @@ def status():
     """Check connection status to various services."""
     from ..llm.processor import LLMProcessor
 
+    config = load_config()
+    click.secho(f"Loaded configuration: {config}", fg="yellow")
+
     # Check LLM providers
-    llm_processor = LLMProcessor()
-    for provider in llm_processor.PROVIDERS:
+    llm_processor = LLMProcessor(config)
+    for provider in llm_processor.providers:
         if provider.check_connection():
             click.secho(f"✓ Connected to {provider.name()} API", fg="green")
         else:

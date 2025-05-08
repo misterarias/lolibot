@@ -2,9 +2,16 @@
 
 import abc
 
+from lolibot.config import BotConfig
+
 
 class LLMProvider(abc.ABC):
     """Abstract base class for LLM providers."""
+
+    @abc.abstractmethod
+    def __init__(self, config: BotConfig):
+        """Initialize the LLM provider."""
+        pass
 
     @abc.abstractmethod
     def name(self) -> str:

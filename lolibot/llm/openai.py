@@ -3,6 +3,8 @@
 import json
 import logging
 import requests
+
+from lolibot.config import BotConfig
 from .base import LLMProvider
 from .prompts import common_prompt
 
@@ -15,10 +17,8 @@ class OpenAIProvider(LLMProvider):
     def name(self) -> str:
         return "OpenAI"
 
-    def __init__(self):
-        from lolibot.config import OPENAI_API_KEY
-
-        self.__api_key = OPENAI_API_KEY
+    def __init__(self, config: BotConfig):
+        self.__api_key = config.openai_api_key
 
     def process_text(self, text) -> dict:
         """Process text with OpenAI API."""

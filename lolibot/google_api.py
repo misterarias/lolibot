@@ -9,11 +9,16 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from lolibot.config import SCOPES, DEFAULT_TIMEZONE
+#from lolibot.config import SCOPES, DEFAULT_TIMEZONE
+
+
+# Google API scopes
+SCOPES = [
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/tasks",
+]
 
 logger = logging.getLogger(__name__)
-default_tz = pytz.timezone(DEFAULT_TIMEZONE)
-tz = str(default_tz)
 
 
 def validate_task(task_data) -> dict:

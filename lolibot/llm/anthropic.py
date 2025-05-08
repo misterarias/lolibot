@@ -4,6 +4,8 @@ import json
 import logging
 import re
 import requests
+
+from lolibot.config import BotConfig
 from .base import LLMProvider
 from .prompts import common_prompt
 
@@ -16,10 +18,8 @@ class AnthropicProvider(LLMProvider):
     def name(self):
         return "Anthropic"
 
-    def __init__(self):
-        from lolibot.config import CLAUDE_API_KEY
-
-        self.__api_key = CLAUDE_API_KEY
+    def __init__(self, config: BotConfig):
+        self.__api_key = config.claude_api_key
 
     def check_connection(self):
         try:

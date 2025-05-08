@@ -4,6 +4,8 @@ import json
 import logging
 import re
 import requests
+
+from lolibot.config import BotConfig
 from .base import LLMProvider
 
 logger = logging.getLogger(__name__)
@@ -15,10 +17,8 @@ class GeminiProvider(LLMProvider):
     def name(self):
         return "Gemini"
 
-    def __init__(self):
-        from lolibot.config import GEMINI_API_KEY
-
-        self.__api_key = GEMINI_API_KEY
+    def __init__(self, config: BotConfig):
+        self.__api_key = config.gemini_api_key
 
     def check_connection(self):
         try:
