@@ -2,7 +2,7 @@
 
 import click
 
-from lolibot.config import BotConfig, load_config
+from lolibot.services.status import StatusType, status_service
 from lolibot.telegram.bot import run_telegram_bot
 from ..llm.processor import LLMProcessor
 from ..task_manager import TaskManager
@@ -10,14 +10,17 @@ from ..task_manager import TaskManager
 
 @click.command()
 @click.argument("text")
-def create(text):
+@click.pass_context
+def create(ctx, text):
     """Create a task, event, or reminder using natural language.
 
     TEXT is your natural language description of what you want to create.
     For example: "Schedule a meeting with John tomorrow at 2pm"
     """
+    config = ctx.obj["config"]
+
     # Process the text using LLM
-    task_data = LLMProcessor().process_text(text)
+    task_data = LLMProcessor(config).process_text(text)
 
     # Create the task (using a dummy user_id for CLI)
     response = TaskManager.process_task("cli_user", text, task_data)
@@ -25,40 +28,23 @@ def create(text):
 
 
 @click.command()
-def status():
+@click.pass_context
+def status(ctx):
     """Check connection status to various services."""
-    from ..llm.processor import LLMProcessor
-
-    config = load_config()
-    click.secho(f"Loaded configuration: {config}", fg="yellow")
-
-    # Check LLM providers
-    llm_processor = LLMProcessor(config)
-    for provider in llm_processor.providers:
-        if provider.check_connection():
-            click.secho(f"✓ Connected to {provider.name()} API", fg="green")
+    config = ctx.obj["config"]
+    status_list = status_service(config)
+    for status_item in status_list:
+        if status_item.status_type == StatusType.OK:
+            click.secho(f"✓ {status_item.name}", fg="green")
+        elif status_item.status_type == StatusType.ERROR:
+            click.secho(f"✗ {status_item.name}", fg="red")
         else:
-            click.secho(f"✗ Not connected to {provider.name()} API", fg="red")
-
-    # Check Google services
-    from ..google_api import get_google_service
-
-    try:
-        calendar = get_google_service("calendar")
-        calendar.events().list(calendarId="primary", maxResults=1).execute()
-        click.secho("✓ Connected to Google Calendar", fg="green")
-    except Exception as e:
-        click.secho(f"✗ Not connected to Google Calendar: {str(e)}", fg="red")
-
-    try:
-        tasks = get_google_service("tasks")
-        tasks.tasklists().list(maxResults=1).execute()
-        click.secho("✓ Connected to Google Tasks", fg="green")
-    except Exception as e:
-        click.secho(f"✗ Not connected to Google Tasks: {str(e)}", fg="red")
+            click.secho(f"{status_item.name}", fg="yellow")
 
 
 @click.command()
-def telegram():
+@click.pass_context
+def telegram(ctx):
     """Start the Telegram bot."""
-    run_telegram_bot()
+    config = ctx.obj["config"]
+    run_telegram_bot(config=config)

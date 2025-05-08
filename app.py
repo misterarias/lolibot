@@ -7,9 +7,11 @@ Available interfaces:
 - Telegram bot
 """
 import os
+from pathlib import Path
 import click
 import logging
 from lolibot.cli.commands import create, status, telegram
+from lolibot.db import init_db
 
 
 def configure_logging(verbosity: int):
@@ -34,9 +36,19 @@ def configure_logging(verbosity: int):
 
 @click.group()
 @click.option("-v", "--verbose", count=True, help="Increase verbosity (up to -vvv)")
-def main(verbose):
+@click.option("--config-path", default=Path("config.toml"), type=click.Path(exists=True), help="Path to the TOML configuration file")
+@click.pass_context
+def main(ctx, verbose, config_path):
     """Task Manager - Create tasks, events, and reminders using natural language."""
+    ctx.ensure_object(dict)
+    ctx.obj["config_path"] = config_path
+
     configure_logging(verbose)
+    init_db()
+
+    # Load the configuration
+    from lolibot.config import load_config
+    ctx.obj["config"] = load_config(config_path)
 
 
 # Add the CLI commands directly
