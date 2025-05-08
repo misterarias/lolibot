@@ -16,8 +16,12 @@ requests="2.31.0"
 python-dotenv="1.0.0"
 pytz= "2023.3.post1"
 python-telegram-bot = "20.6"
+click = "^8.1.7"
 
 [tool.poetry]
+
+[tool.poetry.scripts]
+lolibot = "app:main"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
