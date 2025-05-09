@@ -5,3 +5,6 @@ __pycache__
 taskbot.db
 
 .vscode
+.coverage
+coverage.xml
+htmlcov/

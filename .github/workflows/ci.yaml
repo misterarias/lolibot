@@ -1,0 +1,86 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'poetry'
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction
+
+      - name: Enable Poetry virtualenv
+        run: |
+          echo "VIRTUAL_ENV=$(poetry env info -p)" >> $GITHUB_ENV
+          echo "PATH=$(poetry env info -p)/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Check code style with black
+        run: poetry run black --check .
+
+      - name: Lint with flake8
+        run: poetry run flake8 .
+
+      - name: Run tests with coverage
+        run: |
+          poetry run coverage run -m pytest
+          # poetry run coverage report --fail-under=80
+          poetry run coverage xml
+
+      - name: Upload coverage to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    needs: build
+    if: github.event_name == 'push' && github.base_ref == 'main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract version
+        id: get_version
+        run: |
+          VERSION=$(grep '^version = ' pyproject.toml | head -1 | cut -d '"' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USER }}/lolibot:${{ steps.get_version.outputs.version }} .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USER }}/lolibot:${{ steps.get_version.outputs.version }}
