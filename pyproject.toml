@@ -18,11 +18,12 @@ pytz= "2023.3.post1"
 python-telegram-bot = "20.6"
 click = "^8.1.7"
 tomli = "^2.2.1"
+tomli-w = "^1.2.0"
 
 [tool.poetry]
 
 [tool.poetry.scripts]
-lolibot = "app:main"
+loli = "app:main"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"

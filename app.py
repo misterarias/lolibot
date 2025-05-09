@@ -9,7 +9,7 @@ Available interfaces:
 from pathlib import Path
 import click
 import logging
-from lolibot.cli.commands import apunta, status, telegram
+from lolibot.cli.commands import apunta_command, change_context_command, status_command, telegram_command
 from lolibot.db import init_db
 
 
@@ -46,9 +46,10 @@ def main(ctx, verbose, config_path):
 
 
 # Add the CLI commands directly
-main.add_command(apunta)
-main.add_command(telegram)
-main.add_command(status)
+main.add_command(apunta_command)
+main.add_command(telegram_command)
+main.add_command(status_command)
+main.add_command(change_context_command)
 
 
 if __name__ == "__main__":

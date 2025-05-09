@@ -22,26 +22,6 @@ SCOPES = [
 logger = logging.getLogger(__name__)
 
 
-def validate_task(config: BotConfig, task_data: TaskData) -> TaskData:
-    # make sure date is older than current date
-    if task_data.date:
-        try:
-            task_date = datetime.strptime(task_data.date, "%Y-%m-%d").date()
-            if task_date < datetime.now().date():
-                raise ValueError("Task date cannot be in the past.")
-        except ValueError as e:
-            logger.error(f"Invalid date format: {e}")
-            raise
-
-    return TaskData(
-        task_type=task_data.task_type,
-        title=f"[ {config.bot_name} ] - {task_data.title}",
-        description=task_data.description,
-        date=task_data.date,
-        time=task_data.time,
-    )
-
-
 def get_google_service(config: BotConfig, service_name: str):
     """Get authenticated Google API service."""
     creds = None
@@ -86,7 +66,6 @@ def create_task(config: BotConfig, task_data: TaskData):
             task_list_id = task_lists["items"][0]["id"]
 
         # Create the task
-        task_data = validate_task(config, task_data)
         task = {
             "title": task_data.title,
             "notes": task_data.description,
@@ -116,7 +95,6 @@ def create_calendar_event(config: BotConfig, event_data: TaskData):
         end_datetime = end_datetime + timedelta(minutes=30)
         end_datetime = end_datetime.isoformat()
 
-        event_data = validate_task(config, event_data)
         event = {
             "summary": event_data.title,
             "description": event_data.description,
@@ -154,7 +132,6 @@ def create_reminder(config: BotConfig, reminder_data: TaskData):
         end_datetime = end_datetime + timedelta(minutes=15)
         end_datetime = end_datetime.isoformat()
 
-        reminder_data = validate_task(config, reminder_data)
         event = {
             "summary": f"REMINDER: {reminder_data.title}",
             "description": reminder_data.description,
