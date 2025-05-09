@@ -6,7 +6,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from lolibot.config import BotConfig
+from lolibot.config import BotConfig, change_context
 from lolibot.llm.processor import LLMProcessor
 from lolibot.services.status import StatusItem, StatusType, status_service
 from lolibot.services.task_manager import TaskData, TaskManager
@@ -34,7 +34,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Commands:\n"
         "/start - Start the bot\n"
         "/help - Show this help message\n"
-        "/status - Check if I'm connected to your Google account\n\n"
+        "/status - Check status of APIs and services\n\n"
+        "/context - Check or change the context for the bot configuration\n\n"
         "Examples of things you can say:\n"
         '- "Schedule a team meeting tomorrow at 3pm"\n'
         '- "Remind me to call John on Friday"\n'
@@ -53,8 +54,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     status_list = status_service(config)
     status_list.append(StatusItem(f"Uptime: {uptime_str}", StatusType.INFO))
 
-    info_messages = "\n".join(f"{status_item.name}" for status_item in status_list if status_item.status_type == StatusType.INFO)
-
+    info_messages = "\n".join(f"ℹ️ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.INFO)
     ok_messages = "\n".join(f"✅ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.OK)
     err_messages = "\n".join(f"❌ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.ERROR)
     extra = ""
@@ -65,7 +65,6 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     md_message = f"""
 {info_messages}
-
 {ok_messages}
 {err_messages}
 
@@ -97,6 +96,31 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(response)
 
 
+async def context_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Change the context for the bot."""
+    message = update.message.text
+    config: BotConfig = context.application.bot_data.get("config")
+    if len(message.split(" ")) < 2:
+        response = f"""
+Current context:    {config.context_name}
+Available contexts: {', '.join(config.available_contexts)}
+To change the context, use the command:
+/context <context_name>
+"""
+        await update.message.reply_text(response)
+        return
+
+    context_name = update.message.text.split(" ")[1].strip()
+    try:
+        # Assuming change_context is a function that changes the context
+        new_config = change_context(context_name, config)
+        context.application.bot_data["config"] = new_config
+        await update.message.reply_text(f"✅ Context changed to {context_name}")
+    except Exception as e:
+        logger.error(f"Error changing context: {e}")
+        await update.message.reply_text(f"❌ Error changing context: {e}")
+
+
 def run_telegram_bot(config: BotConfig):
     """Start the Telegram bot."""
     # Check bot token
@@ -113,6 +137,7 @@ def run_telegram_bot(config: BotConfig):
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("status", status_command))
+    application.add_handler(CommandHandler("context", context_command))
 
     # Add message handler
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))

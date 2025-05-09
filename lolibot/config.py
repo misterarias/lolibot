@@ -6,10 +6,12 @@ from typing import Optional
 import tomli
 from pathlib import Path
 
+import tomli_w
+
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
+@dataclass()
 class BotConfig:
     """Bot configuration loaded from TOML file."""
 
@@ -20,6 +22,8 @@ class BotConfig:
     gemini_api_key: Optional[str] = None
     claude_api_key: Optional[str] = None
     telegram_bot_token: Optional[str] = None
+    available_contexts: list[str] = None
+    config_path: Optional[Path] = None
 
     def get_creds_path(self) -> Path:
         """Get the path to the credentials file based on current context."""
@@ -52,6 +56,8 @@ def load_config(config_path: Path = Path("config.toml")) -> BotConfig:
         "bot_name": lolibot_config.get("bot_name"),
         "default_timezone": lolibot_config.get("default_timezone"),
         "context_name": context_name,
+        "available_contexts": list(config_data.get("context", {}).keys()),
+        "config_path": config_path,
     }
 
     # merge base with default context configuration
@@ -65,3 +71,18 @@ def load_config(config_path: Path = Path("config.toml")) -> BotConfig:
     final_config = {**base_config, **context_config}
 
     return BotConfig(**final_config)
+
+
+def change_context(new_context: str, config: BotConfig) -> BotConfig:
+    """Save new context to the configuration file."""
+    if new_context not in config.available_contexts:
+        raise ValueError(f"Context '{new_context}' not found in available contexts.")
+
+    with open(config.config_path, "rb") as f:
+        config_data = tomli.load(f)
+
+    config_data["lolibot"]["current_context"] = new_context
+    with open(config.config_path, "wb") as f:
+        tomli_w.dump(config_data, f)
+
+    return load_config(config.config_path)

@@ -1,5 +1,6 @@
 """Task management module for handling tasks, events, and reminders."""
 
+from datetime import datetime
 import logging
 from lolibot import UnknownTaskException
 from lolibot.config import BotConfig
@@ -17,10 +18,31 @@ class TaskManager:
         """Initialize the TaskManager with the bot configuration."""
         self.config = config
 
+    def validate_task(self, task_data: TaskData) -> TaskData:
+        # make sure date is older than current date
+        if task_data.date:
+            try:
+                task_date = datetime.strptime(task_data.date, "%Y-%m-%d").date()
+                if task_date < datetime.now().date():
+                    raise ValueError("Task date cannot be in the past.")
+            except ValueError as e:
+                logger.error(f"Invalid date format: {e}")
+                raise
+
+        return TaskData(
+            task_type=task_data.task_type,
+            title=f"{self.config.bot_name} {task_data.title}",
+            description=task_data.description,
+            date=task_data.date,
+            time=task_data.time,
+        )
+
     def process_task(self, user_id, message, task_data: TaskData):
         """Process a task and create it in the appropriate service."""
         # Create the appropriate item based on task type
         google_id = None
+        task_data = self.validate_task(task_data)
+
         if task_data.task_type == "task":
             google_id = create_task(self.config, task_data)
             confirmation = "Task created"
