@@ -4,12 +4,13 @@ import logging
 import os
 import json
 from datetime import datetime, timedelta
-import pytz
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-#from lolibot.config import SCOPES, DEFAULT_TIMEZONE
+
+from lolibot.config import BotConfig
+from lolibot.services import TaskData
 
 
 # Google API scopes
@@ -21,26 +22,32 @@ SCOPES = [
 logger = logging.getLogger(__name__)
 
 
-def validate_task(task_data) -> dict:
-    # Add flair to the task title
-    task_data["title"] = f"[LOLI] {task_data['title']}"
-
+def validate_task(config: BotConfig, task_data: TaskData) -> dict:
     # make sure date is older than current date
     if task_data["date"]:
         try:
-            task_date = datetime.strptime(task_data["date"], "%Y-%m-%d").date()
+            task_date = datetime.strptime(task_data.date, "%Y-%m-%d").date()
             if task_date < datetime.now().date():
                 raise ValueError("Task date cannot be in the past.")
         except ValueError as e:
             logger.error(f"Invalid date format: {e}")
             raise
-    return task_data
+
+    return TaskData(
+        task_type=task_data.task_type,
+        title=f"[ {config.bot_name} ] - {task_data.title}",
+        description=task_data.description,
+        date=task_data.date,
+        time=task_data.time
+    )
 
 
-def get_google_service(service_name):
+def get_google_service(config: BotConfig, service_name: str):
     """Get authenticated Google API service."""
     creds = None
-    token_file = f"token_{service_name}.json"
+    creds_path = config.get_creds_path()
+    token_file = creds_path / f"token_{service_name}.json"
+    credentials_file = creds_path / "credentials.json"
 
     # Load existing token if available
     if os.path.exists(token_file):
@@ -52,7 +59,7 @@ def get_google_service(service_name):
 
     # Get new credentials if none exist
     if not creds or not creds.valid:
-        flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+        flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
         creds = flow.run_local_server(port=0)
 
         # Save credentials for future use
@@ -63,10 +70,10 @@ def get_google_service(service_name):
     return build(service_name, "v3" if service_name == "calendar" else "v1", credentials=creds)
 
 
-def create_task(task_data):
+def create_task(config: BotConfig, task_data: TaskData):
     """Create a task in Google Tasks."""
     try:
-        service = get_google_service("tasks")
+        service = get_google_service(config, "tasks")
 
         # Get task lists
         task_lists = service.tasklists().list().execute()
@@ -79,7 +86,7 @@ def create_task(task_data):
             task_list_id = task_lists["items"][0]["id"]
 
         # Create the task
-        task_data = validate_task(task_data)
+        task_data = validate_task(config, task_data)
         task = {
             "title": task_data["title"],
             "notes": task_data["description"],
@@ -95,10 +102,10 @@ def create_task(task_data):
         return None
 
 
-def create_calendar_event(event_data):
+def create_calendar_event(config: BotConfig, event_data: TaskData):
     """Create an event in Google Calendar."""
     try:
-        service = get_google_service("calendar")
+        service = get_google_service(config, "calendar")
 
         # Set the start and end times
         start_time = event_data["time"] if event_data["time"] else "09:00"
@@ -109,17 +116,17 @@ def create_calendar_event(event_data):
         end_datetime = end_datetime + timedelta(minutes=30)
         end_datetime = end_datetime.isoformat()
 
-        event_data = validate_task(event_data)
+        event_data = validate_task(config, event_data)
         event = {
             "summary": event_data["title"],
             "description": event_data["description"],
             "start": {
                 "dateTime": start_datetime,
-                "timeZone": tz,
+                "timeZone": config.default_timezone,
             },
             "end": {
                 "dateTime": end_datetime,
-                "timeZone": tz,
+                "timeZone": config.default_timezone,
             },
             "reminders": {"useDefault": True},
         }
@@ -133,10 +140,10 @@ def create_calendar_event(event_data):
         return None
 
 
-def create_reminder(reminder_data):
+def create_reminder(config: BotConfig, reminder_data: TaskData):
     """Create a reminder in Google Calendar."""
     try:
-        service = get_google_service("calendar")
+        service = get_google_service(config, "calendar")
 
         # Set the reminder time
         reminder_time = reminder_data["time"] if reminder_data["time"] else "09:00"
@@ -147,17 +154,17 @@ def create_reminder(reminder_data):
         end_datetime = end_datetime + timedelta(minutes=15)
         end_datetime = end_datetime.isoformat()
 
-        reminder_data = validate_task(reminder_data)
+        reminder_data = validate_task(config, reminder_data)
         event = {
             "summary": f"REMINDER: {reminder_data['title']}",
             "description": reminder_data["description"],
             "start": {
                 "dateTime": reminder_datetime,
-                "timeZone": tz,
+                "timeZone": config.default_timezone,
             },
             "end": {
                 "dateTime": end_datetime,
-                "timeZone": tz,
+                "timeZone": config.default_timezone,
             },
             "reminders": {
                 "useDefault": False,

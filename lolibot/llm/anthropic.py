@@ -55,6 +55,8 @@ class AnthropicProvider(LLMProvider):
         )
         result = response.json()
         logger.debug(f"Anthropic response: {result}")
+        if result.get("type") == "error":
+            raise Exception(f"Error processing text with Claude: {result['error']['message']}")
 
         # Extract the JSON from the text
         content = result["content"][0]["text"]

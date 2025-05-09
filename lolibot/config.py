@@ -21,6 +21,14 @@ class BotConfig:
     claude_api_key: Optional[str] = None
     telegram_bot_token: Optional[str] = None
 
+    def get_creds_path(self) -> Path:
+        """Get the path to the credentials file based on current context."""
+        # Assuming the credentials file is in the same directory as this module
+        creds_path = Path(".creds") / self.context_name
+        if not creds_path.exists():
+            creds_path.mkdir(parents=True, exist_ok=True)
+        return creds_path
+
 
 def load_config(config_path: Path = Path("config.toml")) -> BotConfig:
     """Load configuration from TOML file.

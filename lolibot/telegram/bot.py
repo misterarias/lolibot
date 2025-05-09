@@ -9,7 +9,7 @@ from telegram.ext import ContextTypes
 from lolibot.config import BotConfig
 from lolibot.llm.processor import LLMProcessor
 from lolibot.services.status import StatusItem, StatusType, status_service
-from lolibot.task_manager import TaskManager
+from lolibot.services.task_manager import TaskData, TaskManager
 
 logger = logging.getLogger(__name__)
 
@@ -96,11 +96,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Inform the user that we're processing their message
     await update.message.reply_text("Processing your request...")
 
+    config = context.application.bot_data.get("config")
+    task_manager = TaskManager(config)
+
     # Extract task information using LLM
-    task_data = LLMProcessor().process_text(user_message)
+    task_data = LLMProcessor(config).process_text(user_message)
 
     # Process the task and get response
-    response = TaskManager.process_task(user_id, user_message, task_data)
+    response = task_manager.process_task(user_id, user_message, TaskData.from_dict(task_data))
 
     # Send response
     await update.message.reply_text(response)

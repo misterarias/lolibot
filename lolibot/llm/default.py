@@ -12,6 +12,13 @@ logger = logging.getLogger(__name__)
 class DefaultProvider(LLMProvider):
     """Default LLM provider for regex-based parsing."""
 
+    def __init__(self, config):
+        """
+        Initialize the DefaultProvider with the given configuration.
+        This provider uses regex-based parsing to extract task information.
+        """
+        self.config = config
+
     # Day name mappings for both English and Spanish
     DAY_MAP = {
         # English

@@ -1,25 +1,11 @@
-from dataclasses import dataclass
 from typing import List
 
 from lolibot.config import BotConfig
 
 
-from enum import Enum
-
+from lolibot.google_api import get_google_service
 from lolibot.llm.processor import LLMProcessor
-
-
-class StatusType(Enum):
-    """Enum for status types."""
-    OK = "ok"
-    ERROR = "error"
-    INFO = "info"
-
-
-@dataclass(frozen=True)
-class StatusItem:
-    name: str
-    status_type: StatusType
+from lolibot.services import StatusItem, StatusType
 
 
 def status_service(config: BotConfig) -> List[StatusItem]:
@@ -37,20 +23,17 @@ def status_service(config: BotConfig) -> List[StatusItem]:
             item = StatusItem(f"{provider.name()} API", status_type=StatusType.ERROR)
         status_list.append(item)
 
-    # Check Google services
-    from ..google_api import get_google_service
-
     try:
-        calendar = get_google_service("calendar")
+        calendar = get_google_service(config, "calendar")
         calendar.events().list(calendarId="primary", maxResults=1).execute()
         status_list.append(StatusItem("Google Calendar", status_type=StatusType.OK))
     except Exception:
-        status_list.append(StatusItem("Google Calendar", status_type=StatusType.KO))
+        status_list.append(StatusItem("Google Calendar", status_type=StatusType.ERROR))
 
     try:
-        tasks = get_google_service("tasks")
+        tasks = get_google_service(config, "tasks")
         tasks.tasklists().list(maxResults=1).execute()
         status_list.append(StatusItem("Google Tasks", status_type=StatusType.OK))
     except Exception:
-        status_list.append(StatusItem("Google Tasks", status_type=StatusType.KO))
+        status_list.append(StatusItem("Google Tasks", status_type=StatusType.ERROR))
     return status_list

@@ -16,6 +16,7 @@ class LLMProcessor:
     """Process natural language using LLM APIs."""
     def __init__(self, config: BotConfig):
         self.providers = [OpenAIProvider(config), AnthropicProvider(config), GeminiProvider(config)]
+        self.default_provider = DefaultProvider(config)
 
     def process_text(self, text) -> dict:
         """
@@ -34,5 +35,5 @@ class LLMProcessor:
 
         if not response:
             logger.error("All LLM providers failed. Falling back to regex-based parsing.")
-            return DefaultProvider().process_text(text)
+            return self.default_provider.process_text(text)
         return response

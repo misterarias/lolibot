@@ -5,7 +5,7 @@ import click
 from lolibot.services.status import StatusType, status_service
 from lolibot.telegram.bot import run_telegram_bot
 from ..llm.processor import LLMProcessor
-from ..task_manager import TaskManager
+from ..services.task_manager import TaskData, TaskManager
 
 
 @click.command()
@@ -18,12 +18,13 @@ def create(ctx, text):
     For example: "Schedule a meeting with John tomorrow at 2pm"
     """
     config = ctx.obj["config"]
+    task_manager = TaskManager(config)
 
     # Process the text using LLM
     task_data = LLMProcessor(config).process_text(text)
 
     # Create the task (using a dummy user_id for CLI)
-    response = TaskManager.process_task("cli_user", text, task_data)
+    response = task_manager.process_task("cli_user", text, TaskData.from_dict(task_data))
     click.echo(response)
 
 

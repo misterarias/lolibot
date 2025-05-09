@@ -1,7 +1,6 @@
 .env
+.creds
 config.toml
 __pycache__
 taskbot.db
-**/credentials.json
-**/token_calendar.json
-**/token_tasks.json
+
