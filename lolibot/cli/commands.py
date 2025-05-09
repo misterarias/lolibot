@@ -10,6 +10,7 @@ from ..services.task_manager import TaskData, TaskManager
 
 logger = logging.getLogger(__name__)
 
+
 @click.command()
 @click.argument("text", nargs=-1)
 @click.pass_context
