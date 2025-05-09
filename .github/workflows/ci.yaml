@@ -1,0 +1,45 @@
+---
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "export PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction
+
+      - name: Enable Poetry virtualenv
+        run: |
+          echo "VIRTUAL_ENV=$(poetry env info -p)" >> $GITHUB_ENV
+          echo "PATH=$(poetry env info -p)/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Check code style with black
+        run: poetry run black --check .
+
+      - name: Lint with flake8
+        run: poetry run flake8 .
+
+      - name: Run tests with coverage
+        run: |
+          poetry run coverage run -m pytest
+          poetry run coverage report --fail-under=80
+          poetry run coverage xml
