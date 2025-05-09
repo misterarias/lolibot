@@ -53,27 +53,15 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     status_list = status_service(config)
     status_list.append(StatusItem(f"Uptime: {uptime_str}", StatusType.INFO))
 
-    info_messages = '\n'.join(
-        f"{status_item.name}"
-        for status_item in status_list
-        if status_item.status_type == StatusType.INFO
-    )
+    info_messages = "\n".join(f"{status_item.name}" for status_item in status_list if status_item.status_type == StatusType.INFO)
 
-    ok_messages = '\n'.join(
-        f"✅ {status_item.name}"
-        for status_item in status_list
-        if status_item.status_type == StatusType.OK
-    )
-    err_messages = '\n'.join(
-        f"❌ {status_item.name}"
-        for status_item in status_list
-        if status_item.status_type == StatusType.ERROR
-    )
+    ok_messages = "\n".join(f"✅ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.OK)
+    err_messages = "\n".join(f"❌ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.ERROR)
     extra = ""
     if not err_messages:
-        extra = 'All systems are operational 😊'
+        extra = "All systems are operational 😊"
     elif not ok_messages:
-        extra = 'All systems are DOWN ☹️'
+        extra = "All systems are DOWN ☹️"
 
     md_message = f"""
 {info_messages}

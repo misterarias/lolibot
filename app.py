@@ -48,6 +48,7 @@ def main(ctx, verbose, config_path):
 
     # Load the configuration
     from lolibot.config import load_config
+
     ctx.obj["config"] = load_config(config_path)
 
 

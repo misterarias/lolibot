@@ -22,9 +22,9 @@ SCOPES = [
 logger = logging.getLogger(__name__)
 
 
-def validate_task(config: BotConfig, task_data: TaskData) -> dict:
+def validate_task(config: BotConfig, task_data: TaskData) -> TaskData:
     # make sure date is older than current date
-    if task_data["date"]:
+    if task_data.date:
         try:
             task_date = datetime.strptime(task_data.date, "%Y-%m-%d").date()
             if task_date < datetime.now().date():
@@ -38,7 +38,7 @@ def validate_task(config: BotConfig, task_data: TaskData) -> dict:
         title=f"[ {config.bot_name} ] - {task_data.title}",
         description=task_data.description,
         date=task_data.date,
-        time=task_data.time
+        time=task_data.time,
     )
 
 
@@ -88,9 +88,9 @@ def create_task(config: BotConfig, task_data: TaskData):
         # Create the task
         task_data = validate_task(config, task_data)
         task = {
-            "title": task_data["title"],
-            "notes": task_data["description"],
-            "due": f"{task_data['date']}T23:59:59Z" if task_data["date"] else None,
+            "title": task_data.title,
+            "notes": task_data.description,
+            "due": f"{task_data.date}T23:59:59Z" if task_data.date else None,
         }
         logger.info(f"Creating task: {task}")
 
@@ -108,8 +108,8 @@ def create_calendar_event(config: BotConfig, event_data: TaskData):
         service = get_google_service(config, "calendar")
 
         # Set the start and end times
-        start_time = event_data["time"] if event_data["time"] else "09:00"
-        start_datetime = f"{event_data['date']}T{start_time}:00"
+        start_time = event_data.time if event_data.time else "09:00"
+        start_datetime = f"{event_data.date}T{start_time}:00"
 
         # Default event duration: 30 minutes
         end_datetime = datetime.fromisoformat(start_datetime)
@@ -118,8 +118,8 @@ def create_calendar_event(config: BotConfig, event_data: TaskData):
 
         event_data = validate_task(config, event_data)
         event = {
-            "summary": event_data["title"],
-            "description": event_data["description"],
+            "summary": event_data.title,
+            "description": event_data.description,
             "start": {
                 "dateTime": start_datetime,
                 "timeZone": config.default_timezone,
@@ -146,8 +146,8 @@ def create_reminder(config: BotConfig, reminder_data: TaskData):
         service = get_google_service(config, "calendar")
 
         # Set the reminder time
-        reminder_time = reminder_data["time"] if reminder_data["time"] else "09:00"
-        reminder_datetime = f"{reminder_data['date']}T{reminder_time}:00"
+        reminder_time = reminder_data.time if reminder_data.time else "09:00"
+        reminder_datetime = f"{reminder_data.date}T{reminder_time}:00"
 
         # End time is 15 minutes after start for reminders
         end_datetime = datetime.fromisoformat(reminder_datetime)
@@ -156,8 +156,8 @@ def create_reminder(config: BotConfig, reminder_data: TaskData):
 
         reminder_data = validate_task(config, reminder_data)
         event = {
-            "summary": f"REMINDER: {reminder_data['title']}",
-            "description": reminder_data["description"],
+            "summary": f"REMINDER: {reminder_data.title}",
+            "description": reminder_data.description,
             "start": {
                 "dateTime": reminder_datetime,
                 "timeZone": config.default_timezone,

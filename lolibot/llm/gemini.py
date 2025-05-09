@@ -1,5 +1,6 @@
 """Google Gemini provider implementation."""
 
+from datetime import datetime
 import json
 import logging
 import re
@@ -30,10 +31,24 @@ class GeminiProvider(LLMProvider):
 
     def process_text(self, text) -> dict:
         """Process text with Google Gemini API."""
+        today = datetime.now().date()
+        prompt = f"""\
+You are a helpful assistant. Please provide a JSON response to the following request: '{text}'
+DO NOT CREATE ANY EVENT OR TASK. Just return the JSON object.
+For date, extract date from event or use {today} if not specified.
+Never ever return a date before {today}, use null instead.
+Return ONLY a JSON object with:
+{{
+    "task_type": "task", "event", or "reminder",
+    "title": "brief title",
+    "description": "detailed description",
+    "date": "YYYY-MM-DD"),
+    "time": "HH:MM" (extract time or null if not specified)
+}}"""
         response = requests.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self.__api_key}",
             headers={"Content-Type": "application/json"},
-            json={"contents": [{"parts": [{"text": text}]}]},
+            json={"contents": [{"parts": [{"text": prompt}]}]},
         )
         result = response.json()
         logger.debug(f"Gemini response: {result}")

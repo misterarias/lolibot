@@ -21,13 +21,13 @@ class TaskManager:
         """Process a task and create it in the appropriate service."""
         # Create the appropriate item based on task type
         google_id = None
-        if task_data["task_type"] == "task":
+        if task_data.task_type == "task":
             google_id = create_task(self.config, task_data)
             confirmation = "Task created"
-        elif task_data["task_type"] == "event":
+        elif task_data.task_type == "event":
             google_id = create_calendar_event(self.config, task_data)
             confirmation = "Calendar event created"
-        elif task_data["task_type"] == "reminder":
+        elif task_data.task_type == "reminder":
             google_id = create_reminder(self.config, task_data)
             confirmation = "Reminder set"
         else:
