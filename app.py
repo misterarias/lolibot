@@ -10,21 +10,15 @@ import os
 from pathlib import Path
 import click
 import logging
-from lolibot.cli.commands import create, status, telegram
+from lolibot.cli.commands import apunta, status, telegram
 from lolibot.db import init_db
 
 
 def configure_logging(verbosity: int):
     """Configure logging based on verbosity level."""
-    levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG, 3: logging.NOTSET}  # default  # -v  # -vv  # -vvv (maximum verbosity)
-    level = levels.get(min(verbosity, max(levels.keys())), logging.WARNING)
-
-    # Set the DEBUG_MODE environment variable for other modules
-    os.environ["DEBUG_MODE"] = "true" if level <= logging.DEBUG else "false"
-
-    # Configure the root logger
+    level = logging.WARNING - 10 * verbosity
     logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        format="[%(levelname)s] %(asctime)s - %(name)s - %(message)s",
         level=level,
     )
 
@@ -53,7 +47,7 @@ def main(ctx, verbose, config_path):
 
 
 # Add the CLI commands directly
-main.add_command(create)
+main.add_command(apunta)
 main.add_command(telegram)
 main.add_command(status)
 

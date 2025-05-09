@@ -1,5 +1,6 @@
 """CLI commands for the task manager."""
 
+import logging
 import click
 
 from lolibot.services.status import StatusType, status_service
@@ -7,11 +8,12 @@ from lolibot.telegram.bot import run_telegram_bot
 from ..llm.processor import LLMProcessor
 from ..services.task_manager import TaskData, TaskManager
 
+logger = logging.getLogger(__name__)
 
 @click.command()
-@click.argument("text")
+@click.argument("text", nargs=-1)
 @click.pass_context
-def create(ctx, text):
+def apunta(ctx, text):
     """Create a task, event, or reminder using natural language.
 
     TEXT is your natural language description of what you want to create.
@@ -21,6 +23,9 @@ def create(ctx, text):
     task_manager = TaskManager(config)
 
     # Process the text using LLM
+    text = " ".join(text)
+    logger.debug(f"Processing text: {text}")
+
     task_data = LLMProcessor(config).process_text(text)
 
     # Create the task (using a dummy user_id for CLI)
