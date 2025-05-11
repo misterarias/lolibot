@@ -57,7 +57,7 @@ jobs:
       packages: write
       id-token: write
     needs: build
-    if: github.event_name == 'push' && github.base_ref == 'main'
+    if: github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
