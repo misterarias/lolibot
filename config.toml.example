@@ -8,6 +8,7 @@ openai_api_key = "default_api_key_here"
 gemini_api_key = "default_api_key_here"
 claude_api_key = "default_api_key_here"
 telegram_bot_token  = "default token here"
+default_invitees = ["alice@example.com", "bob@example.com"]
 
 [context.personal]
 telegram_bot_token = "custom token here"

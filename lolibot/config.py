@@ -24,6 +24,7 @@ class BotConfig:
     telegram_bot_token: Optional[str] = None
     available_contexts: list[str] = None
     config_path: Optional[Path] = None
+    default_invitees: Optional[list[str]] = None
 
     def get_creds_path(self) -> Path:
         """Get the path to the credentials file based on current context."""
@@ -67,9 +68,11 @@ def load_config(config_path: Path = Path("config.toml")) -> BotConfig:
     # Get context-specific configuration
     context_config = config_data.get("context", {}).get(context_name, {})
 
-    # Merge configurations
+    # Extract invitees and aliases if present
+    default_invitees = context_config.get("default_invitees") or base_config.get("default_invitees")
     final_config = {**base_config, **context_config}
 
+    final_config["default_invitees"] = default_invitees
     return BotConfig(**final_config)
 
 

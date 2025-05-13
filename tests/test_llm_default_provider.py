@@ -68,7 +68,15 @@ class TestDefaultProviderProcessText:
 
     def test_next_weekday(self, provider):
         """Test 'next weekday' date extraction."""
-        for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]:
+        for day in [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]:
             text = f"Meeting next {day}"
             result = provider.process_text(text)
             # Verify the date is in the future

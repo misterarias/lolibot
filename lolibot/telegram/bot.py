@@ -10,6 +10,12 @@ from lolibot.config import BotConfig, change_context
 from lolibot.llm.processor import LLMProcessor
 from lolibot.services.status import StatusItem, StatusType, status_service
 from lolibot.services.task_manager import TaskData, TaskManager
+from lolibot.services.middleware import (
+    MiddlewarePipeline,
+    JustMeInviteeMiddleware,
+    DateValidationMiddleware,
+    TitlePrefixTruncateMiddleware,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -89,10 +95,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Extract task information using LLM
     task_data = LLMProcessor(config).process_text(user_message)
 
-    # Process the task and get response
-    response = task_manager.process_task(user_id, user_message, TaskData.from_dict(task_data))
+    # --- Middleware pipeline ---
+    pipeline = MiddlewarePipeline(
+        [
+            DateValidationMiddleware(),
+            TitlePrefixTruncateMiddleware(config.bot_name),
+            JustMeInviteeMiddleware(getattr(config, "default_invitees", [])),
+            # Add more middleware here in the future
+        ]
+    )
+    processed_data = pipeline.process(user_message, TaskData.from_dict(task_data))
+    # --- End middleware ---
 
-    # Send response
+    # Process the task and get response
+    response = task_manager.process_task(user_id, user_message, processed_data)
+
+    # The response may include extra info about invitees (just me mode)
     await update.message.reply_text(response)
 
 

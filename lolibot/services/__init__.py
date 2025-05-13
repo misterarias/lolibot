@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import List, Optional
 
 
 class StatusType(Enum):
@@ -25,6 +26,7 @@ class TaskData:
     description: str
     date: str
     time: str
+    invitees: Optional[List[str]] = None
 
     @staticmethod
     def from_dict(data: dict) -> "TaskData":
@@ -35,4 +37,5 @@ class TaskData:
             description=data.get("description"),
             date=data.get("date"),
             time=data.get("time"),
+            invitees=data.get("invitees"),
         )
