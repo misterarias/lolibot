@@ -33,17 +33,27 @@ class GeminiProvider(LLMProvider):
         """Process text with Google Gemini API."""
         today = datetime.now().date()
         prompt = f"""\
-You are a helpful assistant. Please provide a JSON response to the following request: '{text}'
+You are a helpful assistant.
+Please provide a JSON response to the following request: '{text}'
+
+Text represents something i need to do. Default 'task_type' to 'task'.
+
 DO NOT CREATE ANY EVENT OR TASK. Just return the JSON object.
 For date, extract date from event or use {today} if not specified.
+Time can be AM/PM or 24-hour format.
+Time can end on "h", such as 12:00h, that is 24-hour format. No ending suffix for time is 24-hour format.
+If a time and date is set, task_type should be 'event'.
+
+task_type can only be 'task' or 'event'.
+
 Never ever return a date before {today}, use null instead.
 Return ONLY a JSON object with:
 {{
-    "task_type": "task", "event", or "reminder",
-    "title": "brief title",
+    "task_type": "'task' or 'event' as especified",
+    "title": "brief title, max 6 words",
     "description": "detailed description",
-    "date": "YYYY-MM-DD"),
-    "time": "HH:MM" (extract time or null if not specified)
+    "date": "YYYY-MM-DD or null",
+    "time": "HH:MM or null"
 }}"""
         response = requests.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self.__api_key}",

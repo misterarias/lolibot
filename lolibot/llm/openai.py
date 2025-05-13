@@ -50,7 +50,10 @@ class OpenAIProvider(LLMProvider):
     def check_connection(self) -> bool:
         """Ping OpenAI API to check if it's reachable."""
         try:
-            response = requests.get("https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {self.__api_key}"})
+            response = requests.get(
+                "https://api.openai.com/v1/models",
+                headers={"Authorization": f"Bearer {self.__api_key}"},
+            )
             return response.status_code == 200
         except Exception as e:
             logger.error(f"Error pinging OpenAI: {e}")

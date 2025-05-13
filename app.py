@@ -9,7 +9,12 @@ Available interfaces:
 from pathlib import Path
 import click
 import logging
-from lolibot.cli.commands import apunta_command, change_context_command, status_command, telegram_command
+from lolibot.cli.commands import (
+    apunta_command,
+    change_context_command,
+    status_command,
+    telegram_command,
+)
 from lolibot.db import init_db
 
 
@@ -23,13 +28,25 @@ def configure_logging(verbosity: int):
 
     # Suppress some library logs unless we're at maximum verbosity
     if level > logging.NOTSET:
-        for lib in ["googleapiclient", "google_auth_httplib2", "google_auth_oauthlib", "httpx", "httpcore", "telegram.ext"]:
+        for lib in [
+            "googleapiclient",
+            "google_auth_httplib2",
+            "google_auth_oauthlib",
+            "httpx",
+            "httpcore",
+            "telegram.ext",
+        ]:
             logging.getLogger(lib).setLevel(logging.WARNING)
 
 
 @click.group()
 @click.option("-v", "--verbose", count=True, help="Increase verbosity (up to -vvv)")
-@click.option("--config-path", default=Path("config.toml"), type=click.Path(exists=True), help="Path to the TOML configuration file")
+@click.option(
+    "--config-path",
+    default=Path("config.toml"),
+    type=click.Path(exists=True),
+    help="Path to the TOML configuration file",
+)
 @click.pass_context
 def main(ctx, verbose, config_path):
     """Task Manager - Create tasks, events, and reminders using natural language."""

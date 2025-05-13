@@ -101,7 +101,10 @@ class DefaultProvider(LLMProvider):
         text = text.lower()
         if re.search(r"remind(?:er)?|alert|notify|recordar|alertar|avisar|recordatorio", text):
             return "reminder"
-        elif re.search(r"meet(?:ing)?|call|discuss|talk|conversation|reuni[óo]n|llamada|charla|hablar|discutir", text):
+        elif re.search(
+            r"meet(?:ing)?|call|discuss|talk|conversation|reuni[óo]n|llamada|charla|hablar|discutir",
+            text,
+        ):
             return "event"
         return "task"
 
@@ -212,8 +215,14 @@ class DefaultProvider(LLMProvider):
         date_parsers = [
             (r"\d{4}-\d{2}-\d{2}", self._parse_iso_date),
             (r"\d{1,2}/\d{1,2}/\d{4}", self._parse_slash_date),
-            (r"today|tomorrow|next\s+\w+|hoy|mañana|proximo\s+\w+|próximo\s+\w+", self._parse_relative_date),
-            (r"\d{1,2}(?:st|nd|rd|th)?\s+(?:de\s+)?[a-zA-Zé]+", self._parse_textual_date),
+            (
+                r"today|tomorrow|next\s+\w+|hoy|mañana|proximo\s+\w+|próximo\s+\w+",
+                self._parse_relative_date,
+            ),
+            (
+                r"\d{1,2}(?:st|nd|rd|th)?\s+(?:de\s+)?[a-zA-Zé]+",
+                self._parse_textual_date,
+            ),
         ]
 
         for pattern, parser in date_parsers:

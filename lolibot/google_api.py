@@ -108,6 +108,9 @@ def create_calendar_event(config: BotConfig, event_data: TaskData):
             },
             "reminders": {"useDefault": True},
         }
+        # Add attendees if present
+        if event_data.invitees:
+            event["attendees"] = [{"email": email} for email in event_data.invitees]
         logger.info(f"Creating event: {event}")
 
         result = service.events().insert(calendarId="primary", body=event).execute()

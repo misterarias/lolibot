@@ -6,6 +6,12 @@ import click
 from lolibot.config import BotConfig, change_context
 from lolibot.services.status import StatusType, status_service
 from lolibot.telegram.bot import run_telegram_bot
+from lolibot.services.middleware import (
+    MiddlewarePipeline,
+    JustMeInviteeMiddleware,
+    DateValidationMiddleware,
+    TitlePrefixTruncateMiddleware,
+)
 from ..llm.processor import LLMProcessor
 from ..services.task_manager import TaskData, TaskManager
 
@@ -30,8 +36,21 @@ def apunta_command(ctx, text):
 
     task_data = LLMProcessor(config).process_text(text)
 
+    # --- Middleware pipeline ---
+    pipeline = MiddlewarePipeline(
+        [
+            DateValidationMiddleware(),
+            TitlePrefixTruncateMiddleware(config.bot_name),
+            JustMeInviteeMiddleware(getattr(config, "default_invitees", [])),
+            # Add more middleware here in the future
+        ]
+    )
+    processed_data = pipeline.process(text, TaskData.from_dict(task_data))
+    # --- End middleware ---
+
     # Create the task (using a dummy user_id for CLI)
-    response = task_manager.process_task("cli_user", text, TaskData.from_dict(task_data))
+    response = task_manager.process_task("cli_user", text, processed_data)
+    # The response may include extra info about invitees (just me mode)
     click.echo(response)
 
 
