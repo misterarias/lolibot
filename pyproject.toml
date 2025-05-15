@@ -1,6 +1,6 @@
 [project]
 name = "lolibot"
-version = "0.3.0"
+version = "0.4.0"
 description = ""
 authors = [
     {name = "Juan Arias",email = "juan.arias.freire@gmail.com"}
@@ -31,6 +31,7 @@ flake8 = "^7.2.0"
 flake8-pyproject = "^1.2.3"
 pytest = "^8.3.5"
 coverage = "^7.8.0"
+bandit = "^1.8.3"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -41,3 +42,5 @@ line-length = 140
 
 [tool.flake8]
 max-line-length = 140
+statistics = true
+benchmark = true

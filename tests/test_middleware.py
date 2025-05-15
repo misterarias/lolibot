@@ -3,10 +3,30 @@ from lolibot.services.middleware import (
     JustMeInviteeMiddleware,
     DateValidationMiddleware,
     TitlePrefixTruncateMiddleware,
+    NotTaskMiddleWare,
 )
 from lolibot.services import TaskData
 import pytest
 from datetime import datetime, timedelta
+
+
+def test_not_task_middleware_ignores_tasks():
+    mw = NotTaskMiddleWare()
+    data = TaskData(task_type="event", title="Meeting", description="desc", date="2025-05-14", time="10:00", invitees=[])
+    assert mw.process("msg", data) == data
+
+
+def test_not_task_middleware_converts_tasks():
+    mw = NotTaskMiddleWare()
+    data = TaskData(task_type="task", title="Task", description="desc", date="2025-05-14", time="10:00", invitees=[])
+    result = mw.process("msg", data)
+    assert result.task_type == "event"
+
+
+def test_not_task_middleware_ignores_tasks_with_date():
+    mw = NotTaskMiddleWare()
+    data = TaskData(task_type="task", title="Task", description="desc", date="2025-05-14", time=None, invitees=[])
+    assert mw.process("msg", data) == data
 
 
 def test_just_me_invitee_removes_invitees():
