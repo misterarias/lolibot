@@ -7,13 +7,14 @@ import os
 logger = logging.getLogger(__name__)
 
 
-# SQLite DB for persistence
-DB_PATH = os.getenv("DB_PATH", "./taskbot.db")
+def get_db_path():
+    """Get the path to the SQLite database."""
+    return os.getenv("DB_PATH", "./taskbot.db")
 
 
 def init_db():
     """Initialize the SQLite database."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
     logger.debug("Initializing database...")
     cursor.execute(
@@ -39,7 +40,7 @@ def init_db():
 
 def save_task_to_db(user_id, message, task_data, google_id=None):
     """Save task information to the local database."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
     logger.debug("Saving task to database...")
 

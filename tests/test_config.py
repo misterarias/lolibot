@@ -81,6 +81,7 @@ def test_load_config_with_context(tmp_path):
     assert config.gemini_api_key == "test_gemini_key"
     assert config.claude_api_key == "test_claude_key"
     assert config.available_contexts == ["default", "test_context"]
+    assert config.get_switchable_contexts() == ["test_context"]
     assert config.get_creds_path() == Path(".creds") / "test_context"
 
 
@@ -109,6 +110,8 @@ def test_change_context(tmp_path):
 
     loaded_config = load_config(config_path)
     assert loaded_config.context_name == "test_context"
+    # 'default' is not switchable if more than one context exists
+    assert "default" not in loaded_config.get_switchable_contexts()
 
     # Change context to an invalid context results in error
     with pytest.raises(ValueError):
