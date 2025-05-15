@@ -25,6 +25,7 @@ class BotConfig:
     available_contexts: list[str] = None
     config_path: Optional[Path] = None
     default_invitees: Optional[list[str]] = None
+    contexts: dict = None  # Store all contexts in memory
 
     def get_creds_path(self) -> Path:
         """Get the path to the credentials file based on current context."""
@@ -33,6 +34,12 @@ class BotConfig:
         if not creds_path.exists():
             creds_path.mkdir(parents=True, exist_ok=True)
         return creds_path
+
+    def get_switchable_contexts(self) -> list:
+        """Return a list of contexts that can be switched to (never show 'default' if others exist)."""
+        if self.available_contexts and len(self.available_contexts) > 1:
+            return [c for c in self.available_contexts if c != "default"]
+        return self.available_contexts or []
 
 
 def load_config(config_path: Path = Path("config.toml")) -> BotConfig:
@@ -48,44 +55,38 @@ def load_config(config_path: Path = Path("config.toml")) -> BotConfig:
     with open(config_path, "rb") as f:
         config_data = tomli.load(f)
 
-    # Get the current context
     lolibot_config = config_data.get("lolibot", {})
     context_name = lolibot_config.get("current_context", "default")
+    all_contexts = config_data.get("context", {})
+    available_contexts = list(all_contexts.keys())
 
-    # Get base configuration
     base_config = {
         "bot_name": lolibot_config.get("bot_name"),
         "default_timezone": lolibot_config.get("default_timezone"),
         "context_name": context_name,
-        "available_contexts": list(config_data.get("context", {}).keys()),
+        "available_contexts": available_contexts,
         "config_path": config_path,
+        "contexts": all_contexts,
     }
 
     # merge base with default context configuration
-    default_context = config_data.get("context", {}).get("default", {})
+    default_context = all_contexts.get("default", {})
     base_config = {**base_config, **default_context}
-
-    # Get context-specific configuration
-    context_config = config_data.get("context", {}).get(context_name, {})
-
-    # Extract invitees and aliases if present
+    context_config = all_contexts.get(context_name, {})
     default_invitees = context_config.get("default_invitees") or base_config.get("default_invitees")
     final_config = {**base_config, **context_config}
-
     final_config["default_invitees"] = default_invitees
     return BotConfig(**final_config)
 
 
 def change_context(new_context: str, config: BotConfig) -> BotConfig:
-    """Save new context to the configuration file."""
-    if new_context not in config.available_contexts:
+    """Save new context to the configuration file. 'default' is not allowed if other contexts exist."""
+    switchable = config.get_switchable_contexts()
+    if new_context not in switchable:
         raise ValueError(f"Context '{new_context}' not found in available contexts.")
-
     with open(config.config_path, "rb") as f:
         config_data = tomli.load(f)
-
     config_data["lolibot"]["current_context"] = new_context
     with open(config.config_path, "wb") as f:
         tomli_w.dump(config_data, f)
-
     return load_config(config.config_path)

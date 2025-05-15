@@ -1,6 +1,6 @@
 test: 
-	@poetry run coverage run -m pytest
-	@poetry run coverage report --fail-under 70
+	@poetry run coverage run -m pytest -v 
+	@poetry run coverage report --fail-under 70 -m
 
 style:
 	@poetry run black .

@@ -3,7 +3,7 @@
 import time
 import logging
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
-from telegram import Update
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from lolibot.config import BotConfig, change_context
@@ -117,19 +117,26 @@ async def context_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Change the context for the bot."""
     message = update.message.text
     config: BotConfig = context.application.bot_data.get("config")
+    switchable_contexts = config.get_switchable_contexts()
+    if len(switchable_contexts) > 1:
+        # Show context switch buttons always or on /context
+        keyboard = [[c] for c in switchable_contexts]
+        reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+    else:
+        reply_markup = None
+
     if len(message.split(" ")) < 2:
         response = f"""
 Current context:    {config.context_name}
-Available contexts: {', '.join(config.available_contexts)}
-To change the context, use the command:
+Available contexts: {', '.join(switchable_contexts)}
+To change the context, use the command or tap a button:
 /context <context_name>
 """
-        await update.message.reply_text(response)
+        await update.message.reply_text(response, reply_markup=reply_markup)
         return
 
     context_name = update.message.text.split(" ")[1].strip()
     try:
-        # Assuming change_context is a function that changes the context
         new_config = change_context(context_name, config)
         context.application.bot_data["config"] = new_config
         await update.message.reply_text(f"✅ Context changed to {context_name}")
