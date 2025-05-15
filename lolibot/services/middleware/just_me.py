@@ -1,28 +1,12 @@
-"""Middleware layer for pre-processing task/event/reminder data before TaskManager."""
-
 import logging
-from typing import Protocol, List
-from lolibot.services import TaskData
 import re
-from datetime import datetime
+from lolibot.services import TaskData
+from lolibot.services.middleware.protocol import TaskMiddleware
 
 
-class TaskMiddleware(Protocol):
-    def process(self, message: str, data: TaskData) -> TaskData: ...
-
-
-class MiddlewarePipeline:
-    def __init__(self, middlewares: List[TaskMiddleware]):
-        self.middlewares = middlewares
-
-    def process(self, message: str, data: TaskData) -> TaskData:
-        for mw in self.middlewares:
-            data = mw.process(message, data)
-        return data
-
-
-class JustMeInviteeMiddleware:
-    JUST_ME_PATTERNS = [
+JUST_ME_PATTERNS = [
+    re.compile(regex, re.IGNORECASE)
+    for regex in (
         r"just me",
         r"only me",
         r"myself",
@@ -46,8 +30,11 @@ class JustMeInviteeMiddleware:
         r"ponlo sólo para mí",
         r"ponlo solo para mí",
         r"ponlo en mi calendario",
-    ]
+    )
+]
 
+
+class JustMeInviteeMiddleware(TaskMiddleware):
     def __init__(self, default_invitees: list):
         self.default_invitees = default_invitees
         self.logger = logging.getLogger(__name__)
@@ -62,7 +49,7 @@ class JustMeInviteeMiddleware:
             return data
 
         msg = message.lower()
-        for pat in self.JUST_ME_PATTERNS:
+        for pat in JUST_ME_PATTERNS:
             if re.search(pat, msg):
                 # Remove invitees
                 self.logger.info(f"Keyword '{pat}' matched. Setting invitees to empty list.")
@@ -83,35 +70,4 @@ class JustMeInviteeMiddleware:
             date=data.date,
             time=data.time,
             invitees=self.default_invitees,
-        )
-
-
-class DateValidationMiddleware:
-    def process(self, message: str, data: TaskData) -> TaskData:
-        if data.date:
-            try:
-                task_date = datetime.strptime(data.date, "%Y-%m-%d").date()
-                if task_date < datetime.now().date():
-                    raise ValueError("Task date cannot be in the past.")
-            except ValueError as e:
-                raise ValueError(f"Invalid date format: {e}")
-        return data
-
-
-class TitlePrefixTruncateMiddleware:
-    def __init__(self, bot_name: str):
-        self.bot_name = bot_name
-
-    def process(self, message: str, data: TaskData) -> TaskData:
-        title = data.title
-        if len(title) > 50:
-            title = title[:50] + "..."
-        title = f"{self.bot_name} {title}"
-        return TaskData(
-            task_type=data.task_type,
-            title=title,
-            description=data.description,
-            date=data.date,
-            time=data.time,
-            invitees=data.invitees,
         )
