@@ -79,7 +79,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t lolibot
+          docker build -t lolibot .
 
       - name: Push versioned Docker image
         run: |
