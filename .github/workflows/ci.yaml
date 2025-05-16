@@ -79,9 +79,14 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USER }}/lolibot:${{ steps.get_version.outputs.version }} .
+          docker build -t lolibot
 
-      - name: Push Docker image
+      - name: Push versioned Docker image
         run: |
+          docker tag lolibot ${{ secrets.DOCKERHUB_USER }}/lolibot:${{ steps.get_version.outputs.version }}
           docker push ${{ secrets.DOCKERHUB_USER }}/lolibot:${{ steps.get_version.outputs.version }}
+
+      - name: Push latest Docker image
+        run: |
+          docker tag lolibot ${{ secrets.DOCKERHUB_USER }}/lolibot:latest
           docker push ${{ secrets.DOCKERHUB_USER }}/lolibot:latest
