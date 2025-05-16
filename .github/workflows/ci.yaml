@@ -41,7 +41,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           poetry run coverage run -m pytest
-          # poetry run coverage report --fail-under=80
+          poetry run coverage report --fail-under=70
           poetry run coverage xml
 
       - name: Upload coverage to GitHub
@@ -84,3 +84,4 @@ jobs:
       - name: Push Docker image
         run: |
           docker push ${{ secrets.DOCKERHUB_USER }}/lolibot:${{ steps.get_version.outputs.version }}
+          docker push ${{ secrets.DOCKERHUB_USER }}/lolibot:latest
