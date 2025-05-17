@@ -1,12 +1,13 @@
+from unittest.mock import AsyncMock
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+
 from lolibot.config import BotConfig
 from lolibot.telegram.bot import get_context_command
 from types import SimpleNamespace
 
 
 @pytest.mark.asyncio
-async def test_context_command_buttons(monkeypatch):
+async def test_get_context_command():
     # Simulate a config with multiple contexts
     config = BotConfig(
         bot_name="TestBot",
@@ -24,16 +25,17 @@ async def test_context_command_buttons(monkeypatch):
     config.get_switchable_contexts = lambda: ["test", "work"]
 
     # Mock update and context
-    update = MagicMock()
-    update.message.text = "/context"
-    update.message.reply_text = AsyncMock()
+    mock_update = AsyncMock()
+    mock_update.message.text = "/context"
+    mock_update.message.reply_text = AsyncMock()
+
     context_ns = SimpleNamespace()
     context_ns.application = SimpleNamespace()
     context_ns.application.bot_data = {"config": config}
 
-    await get_context_command(update, context_ns)
-    # Should show buttons for 'test' and 'work', not 'default'
-    args, kwargs = update.message.reply_text.call_args
+    await get_context_command(mock_update, context_ns)
+
+    args, _ = mock_update.message.reply_markdown_v2.call_args
     assert "default" not in args[0]
     assert "Available contexts: test, work" in args[0]
-    assert "Current context:    test" in args[0]
+    assert "Current context:    *test*" in args[0]
