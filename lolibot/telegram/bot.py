@@ -123,7 +123,6 @@ Current context:    *{config.context_name}*
 Available contexts: {', '.join(switchable_contexts)}
 """
     await update.message.reply_markdown_v2(response, reply_markup=None)
-    return
 
 
 async def set_context_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -39,9 +39,7 @@ def apunta_command(ctx, text):
 
     click.secho(f"{task_response.task.task_type.capitalize()} created 👍", fg="green")
 
-    time_date_str = (
-        f"- {task_response.task.date}@{task_response.task.time}" if task_response.task.date and task_response.task.time else ""
-    )
+    time_date_str = f"- {task_response.task.date}@{task_response.task.time}" if task_response.task.date and task_response.task.time else ""
     response = f"""
 {task_response.task.title} {time_date_str}
 
