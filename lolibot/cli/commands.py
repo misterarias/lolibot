@@ -4,17 +4,10 @@ import logging
 import click
 
 from lolibot.config import BotConfig, change_context
-from lolibot.services.middleware.not_task import NotTaskMiddleWare
+from lolibot.db import save_task_to_db
+from lolibot.services import processor
 from lolibot.services.status import StatusType, status_service
 from lolibot.telegram.bot import run_telegram_bot
-from lolibot.services.middleware import (
-    MiddlewarePipeline,
-    JustMeInviteeMiddleware,
-    DateValidationMiddleware,
-    TitlePrefixTruncateMiddleware,
-)
-from ..llm.processor import LLMProcessor
-from ..services.task_manager import TaskData, TaskManager
 
 logger = logging.getLogger(__name__)
 
@@ -29,27 +22,33 @@ def apunta_command(ctx, text):
     For example: "Schedule a meeting with John tomorrow at 2pm"
     """
     config = ctx.obj["config"]
-    task_manager = TaskManager(config)
 
     # Process the text using LLM
     text = " ".join(text)
     logger.debug(f"Processing text: {text}")
 
-    task_data = LLMProcessor(config).process_text(text)
+    task_response = processor.process_user_message(config, text)
 
-    pipeline = MiddlewarePipeline(
-        [
-            DateValidationMiddleware(),
-            TitlePrefixTruncateMiddleware(config.bot_name),
-            JustMeInviteeMiddleware(getattr(config, "default_invitees", [])),
-            NotTaskMiddleWare(),
-        ]
+    # Store info in the database
+    save_task_to_db("cli_user", text, task_response.task, task_response.processed)
+
+    # render a nice response using click
+    if not task_response.processed:
+        click.secho("Error processing message 👎", fg="red")
+        return
+
+    click.secho(f"{task_response.task.task_type.capitalize()} created 👍", fg="green")
+
+    time_date_str = (
+        f"- {task_response.task.date}@{task_response.task.time}" if task_response.task.date and task_response.task.time else ""
     )
-    processed_data = pipeline.process(text, TaskData.from_dict(task_data))
+    response = f"""
+{task_response.task.title} {time_date_str}
 
-    # Create the task (using a dummy user_id for CLI)
-    response = task_manager.process_task("cli_user", text, processed_data)
-    # The response may include extra info about invitees (just me mode)
+{task_response.task.description}
+"""
+    if task_response.task.invitees:
+        response += f"Invitees: {', '.join(task_response.task.invitees)}\n\n"
     click.echo(response)
 
 
