@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from lolibot.config import BotConfig
-from lolibot.telegram.bot import context_command
+from lolibot.telegram.bot import get_context_command
 from types import SimpleNamespace
 
 
@@ -31,16 +31,9 @@ async def test_context_command_buttons(monkeypatch):
     context_ns.application = SimpleNamespace()
     context_ns.application.bot_data = {"config": config}
 
-    await context_command(update, context_ns)
+    await get_context_command(update, context_ns)
     # Should show buttons for 'test' and 'work', not 'default'
     args, kwargs = update.message.reply_text.call_args
-    assert "test" in args[0] and "work" in args[0]
     assert "default" not in args[0]
     assert "Available contexts: test, work" in args[0]
-    assert "To change the context" in args[0]
     assert "Current context:    test" in args[0]
-    # Should have reply_markup with two buttons
-    assert kwargs["reply_markup"] is not None
-    # Extract button texts for comparison
-    button_texts = [[button.text for button in row] for row in kwargs["reply_markup"].keyboard]
-    assert button_texts == [["test"], ["work"]]

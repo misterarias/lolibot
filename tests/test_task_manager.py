@@ -23,8 +23,7 @@ def config():
 
 
 @patch("lolibot.services.task_manager.create_task", return_value="g123")
-@patch("lolibot.services.task_manager.save_task_to_db")
-def test_process_task_creates_task(mock_save, mock_create, config):
+def test_process_task_creates_task(mock_create, config):
     tm = TaskManager(config)
     data = TaskData(
         task_type="task",
@@ -34,15 +33,13 @@ def test_process_task_creates_task(mock_save, mock_create, config):
         time=None,
         invitees=None,
     )
-    resp = tm.process_task("u1", "msg", data)
-    assert "Task created" in resp
+    resp = tm.process_task(data)
+    assert resp is True
     assert mock_create.called
-    assert mock_save.called
 
 
 @patch("lolibot.services.task_manager.create_reminder", return_value="r123")
-@patch("lolibot.services.task_manager.save_task_to_db")
-def test_process_reminder(mock_save, mock_create, config):
+def test_process_reminder(mock_create, config):
     tm = TaskManager(config)
     data = TaskData(
         task_type="reminder",
@@ -52,15 +49,13 @@ def test_process_reminder(mock_save, mock_create, config):
         time="09:00",
         invitees=None,
     )
-    resp = tm.process_task("u3", "msg", data)
-    assert "Reminder set" in resp
+    resp = tm.process_task(data)
+    assert resp is True
     assert mock_create.called
-    assert mock_save.called
 
 
 @patch("lolibot.services.task_manager.create_task", return_value=None)
-@patch("lolibot.services.task_manager.save_task_to_db")
-def test_process_task_google_fail(mock_save, mock_create, config):
+def test_process_task_google_fail(mock_create, config):
     tm = TaskManager(config)
     data = TaskData(
         task_type="task",
@@ -70,7 +65,6 @@ def test_process_task_google_fail(mock_save, mock_create, config):
         time=None,
         invitees=None,
     )
-    resp = tm.process_task("u1", "msg", data)
-    assert "couldn't create the task" in resp
+    resp = tm.process_task(data)
+    assert resp is False
     assert mock_create.called
-    assert mock_save.called

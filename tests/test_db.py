@@ -35,12 +35,12 @@ def test_save_task_to_db(tmp_path):
         time = "10:00"
         invitees = ["a@example.com"]
 
-    dbmod.save_task_to_db("u1", "msg", DummyTask(), "gid123")
+    dbmod.save_task_to_db("u1", "msg", DummyTask(), True)
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM tasks WHERE user_id=?", ("u1",))
     row = cursor.fetchone()
     assert row is not None
     assert row[1] == "u1"
-    assert row[8] == "gid123"
+    assert row[10] == 1  # processed
     conn.close()
