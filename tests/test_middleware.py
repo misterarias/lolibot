@@ -78,6 +78,13 @@ def test_default_invitees_are_added():
     assert result.invitees == ["default@example.com"]
 
 
+def test_no_invitees_no_changes():
+    msg = "just me"
+    data = TaskData(task_type="task", title="Task", description="desc", date="2025-05-14", time="10:00")
+    assert JustMeInviteeMiddleware([]).process(msg, data) == data
+    assert JustMeInviteeMiddleware(None).process(msg, data) == data
+
+
 def test_non_event_task_type_untouched():
     mw = JustMeInviteeMiddleware(["default@example.com"])
     pipeline = MiddlewarePipeline([mw])

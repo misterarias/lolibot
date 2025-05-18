@@ -36,7 +36,7 @@ JUST_ME_PATTERNS = [
 
 class JustMeInviteeMiddleware(TaskMiddleware):
     def __init__(self, default_invitees: list):
-        self.default_invitees = default_invitees
+        self.default_invitees = default_invitees or []
         self.logger = logging.getLogger(__name__)
 
     def process(self, message: str, data: TaskData) -> TaskData:

@@ -18,6 +18,7 @@ class BotConfig:
     bot_name: str
     default_timezone: str
     context_name: str
+    telegram_feedback_chat_id: Optional[str] = None
     openai_api_key: Optional[str] = None
     gemini_api_key: Optional[str] = None
     claude_api_key: Optional[str] = None
@@ -56,6 +57,8 @@ def load_config(config_path: Path = Path("config.toml")) -> BotConfig:
         config_data = tomli.load(f)
 
     lolibot_config = config_data.get("lolibot", {})
+
+    # TODO - remove default
     context_name = lolibot_config.get("current_context", "default")
     all_contexts = config_data.get("context", {})
     available_contexts = list(all_contexts.keys())
@@ -67,6 +70,7 @@ def load_config(config_path: Path = Path("config.toml")) -> BotConfig:
         "available_contexts": available_contexts,
         "config_path": config_path,
         "contexts": all_contexts,
+        "telegram_feedback_chat_id": lolibot_config.get("telegram_feedback_chat_id", None),
     }
 
     # merge base with default context configuration
