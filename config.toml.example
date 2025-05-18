@@ -4,6 +4,7 @@ current_context = "default"
 [context.default]
 bot_name = "Mr. Bot"
 default_timezone = "Europe/Madrid"
+telegram_feedback_chat_id = "abcdefasdkasd"
 openai_api_key = "default_api_key_here"
 gemini_api_key = "default_api_key_here"
 claude_api_key = "default_api_key_here"
