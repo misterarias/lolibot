@@ -18,6 +18,10 @@ class AnthropicProvider(LLMProvider):
     def name(self):
         return "Anthropic"
 
+    def enabled(self) -> bool:
+        """Check if the provider is enabled."""
+        return self.__api_key is not None
+
     def __init__(self, config: BotConfig):
         self.__api_key = config.claude_api_key
 

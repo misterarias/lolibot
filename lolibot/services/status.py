@@ -11,7 +11,7 @@ from lolibot.services import StatusItem, StatusType
 def status_service(config: BotConfig) -> List[StatusItem]:
     status_list = [
         StatusItem(f"Bot Name: {config.bot_name}", status_type=StatusType.INFO),
-        StatusItem(f"Active context: {config.context_name}", status_type=StatusType.INFO),
+        StatusItem(f"Active context: {config.current_context}", status_type=StatusType.INFO),
     ]
 
     # Check LLM providers

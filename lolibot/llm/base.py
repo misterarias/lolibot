@@ -26,3 +26,8 @@ class LLMProvider(abc.ABC):
     @abc.abstractmethod
     def check_connection(self) -> bool:
         pass
+
+    @abc.abstractmethod
+    def enabled(self) -> bool:
+        """Check if the LLM provider is enabled."""
+        pass

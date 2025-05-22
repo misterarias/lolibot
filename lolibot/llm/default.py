@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 class DefaultProvider(LLMProvider):
     """Default LLM provider for regex-based parsing."""
 
+    def enabled(self):
+        return True
+
     def __init__(self, config):
         """
         Initialize the DefaultProvider with the given configuration.
