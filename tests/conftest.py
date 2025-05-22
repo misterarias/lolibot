@@ -17,6 +17,7 @@ def bot_config(tmp_path):
             bot_name = "TestBot"
             default_timezone = "UTC"
             telegram_feedback_chat_id = "123456"
+            current_context = "work"
 
             [context.work]
             openai_api_key = "test_openai_key"

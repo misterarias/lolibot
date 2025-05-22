@@ -57,7 +57,7 @@ class BotConfig:
     # Telegram bot token
     @property
     def telegram_token(self) -> str:
-        return self.contexts[self.current_context].get("telegram_token", None)
+        return self.contexts[self.current_context].get("telegram_bot_token", None)
 
     # List of default invitees for the bot
     @property

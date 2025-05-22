@@ -1,5 +1,6 @@
 """Telegram bot application module."""
 
+import sys
 import time
 import logging
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
@@ -20,39 +21,39 @@ from lolibot.telegram import (
 logger = logging.getLogger(__name__)
 
 
+def create_application(config: BotConfig) -> Application:
+    application = Application.builder().token(config.telegram_token).build()
+    application.bot_data["config"] = config
+
+    return application
+
+
 def run_telegram_bot(config: BotConfig):  # noqa
     """Start the Telegram bot."""
     # Check bot token
-    if not config.telegram_bot_token:
-        logger.error("No Telegram bot token provided")
-        return
+    if not config.telegram_token:
+        logger.error("No Telegram bot token provided in config.")
+        sys.exit(1)
 
-    # Initialize the bot and set config as bot data
-    application = Application.builder().token(config.telegram_bot_token).build()
-    application.bot_data["config"] = config
+    application = create_application(config)
     application.bot_data["start_time"] = time.time()
 
-    # Add command handlers
     application.add_handler(CommandHandler("start", start_command.command))
     application.add_handler(CommandHandler("help", help_command.command))
     application.add_handler(CommandHandler("status", status_command.command))
     application.add_handler(CommandHandler("contexts", get_context_command.command))
 
-    # error handler
-    application.add_error_handler(error_handler.error_handler)
+    application.add_error_handler(error_handler.handler)
 
-    for ctx_name in config.get_switchable_contexts():
-        application.add_handler(CommandHandler(f"set_{ctx_name}", set_context_command.command))
-
-    # Add message handler
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler.handler))
 
-    switchable_contexts = config.get_switchable_contexts()
     menu_commands = [
         BotCommand("status", "Show status of APIs and services"),
         BotCommand("contexts", "Check or change the context for the bot configuration"),
     ]
-    for ctx_name in switchable_contexts:
+
+    for ctx_name in config.available_contexts:
+        application.add_handler(CommandHandler(f"set_{ctx_name}", set_context_command.command))
         menu_commands.append(BotCommand(f"set_{ctx_name}", f"Switch to context '{ctx_name}'"))
 
     # Schedule the menu setup as a startup task
