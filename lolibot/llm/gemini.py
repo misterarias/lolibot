@@ -43,7 +43,9 @@ Please provide a JSON response to the following request: '{text}'
 Text represents something i need to do. Default 'task_type' to 'task'.
 
 DO NOT CREATE ANY EVENT OR TASK. Just return the JSON object.
-For date, extract date from event or use {today} if not specified.
+For date, extract date from event. Date can come in many formats, such as: 17/07/2024, 7 de Julio, el próximo martes....
+
+Use {today} if no date specified.
 Time can be AM/PM or 24-hour format.
 Time can end on "h", such as 12:00h, that is 24-hour format. No ending suffix for time is 24-hour format.
 If a time and date is set, task_type should be 'event'.
