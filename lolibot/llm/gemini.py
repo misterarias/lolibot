@@ -18,6 +18,10 @@ class GeminiProvider(LLMProvider):
     def name(self):
         return "Gemini"
 
+    def enabled(self) -> bool:
+        """Check if the Gemini provider is enabled."""
+        return self.__api_key is not None
+
     def __init__(self, config: BotConfig):
         self.__api_key = config.gemini_api_key
 

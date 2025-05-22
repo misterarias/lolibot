@@ -2,22 +2,7 @@ from lolibot.services.status import status_service, StatusType
 from lolibot.config import BotConfig
 
 
-def make_config():
-    return BotConfig(
-        bot_name="TestBot",
-        default_timezone="UTC",
-        context_name="default",
-        openai_api_key="k",
-        gemini_api_key="k",
-        claude_api_key="k",
-        telegram_bot_token="t",
-        available_contexts=["default"],
-        config_path=None,
-    )
-
-
-def test_status_service_types(monkeypatch):
-    config = make_config()
+def test_status_service_types(monkeypatch, test_config: BotConfig):
     # Patch LLMProcessor and get_google_service to always OK
     monkeypatch.setattr(
         "lolibot.services.status.LLMProcessor",
@@ -36,7 +21,7 @@ def test_status_service_types(monkeypatch):
             },
         )(),
     )
-    items = status_service(config)
+    items = status_service(test_config)
     assert any(i.status_type == StatusType.OK for i in items)
     assert any(i.status_type == StatusType.INFO for i in items)
     assert any(isinstance(i.name, str) for i in items)

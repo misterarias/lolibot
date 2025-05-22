@@ -30,6 +30,10 @@ class LLMProcessor:
         llm_providers = random.sample(self.providers, len(self.providers))
         response = None
         for provider in llm_providers:
+            if not provider.enabled():
+                logger.debug(f"Skipping disabled provider: {provider.name()}")
+                continue
+
             logger.info(f"Using LLM provider: {provider.name()}")
             try:
                 response = provider.process_text(text)

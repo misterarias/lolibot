@@ -1,7 +1,4 @@
-[lolibot]
 current_context = "default"
-
-[context.default]
 bot_name = "Mr. Bot"
 default_timezone = "Europe/Madrid"
 telegram_feedback_chat_id = "abcdefasdkasd"

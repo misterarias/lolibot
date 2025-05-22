@@ -17,6 +17,10 @@ class OpenAIProvider(LLMProvider):
     def name(self) -> str:
         return "OpenAI"
 
+    def enabled(self) -> bool:
+        """Check if the provider is enabled."""
+        return self.__api_key is not None
+
     def __init__(self, config: BotConfig):
         self.__api_key = config.openai_api_key
 
