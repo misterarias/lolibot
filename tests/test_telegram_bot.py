@@ -1,11 +1,14 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+from lolibot.services import TaskData
+from lolibot.services.processor import TaskResponse
 from lolibot.telegram.start_command import command as start_command
 from lolibot.telegram.help_command import command as help_command
 from lolibot.telegram.status_command import command as status_command
 from lolibot.telegram.get_context_command import command as get_context_command
 from lolibot.telegram.set_context_command import command as set_context_command
 from lolibot.telegram.error_handler import handler as error_handler
+from lolibot.telegram.message_handler import handler as message_handler
 from lolibot.telegram.bot import run_telegram_bot
 
 
@@ -118,3 +121,45 @@ async def test_error_handler_no_feedback(test_config):
     context.bot.send_message = AsyncMock()
     await error_handler(update, context)
     context.bot.send_message.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_message_handler_success(bot_config):
+    update = MagicMock()
+    context = MagicMock()
+    context.application.bot_data = {"config": bot_config}
+    update.message.text = "do something"
+    update.message.reply_markdown_v2 = AsyncMock()
+    update.message.reply_text = AsyncMock()
+
+    # Simulate a successful task response
+    task = TaskData(task_type="task", title="Test", description="desc", date="2025-05-23", time="12:00", invitees=["me"])
+    task_response = TaskResponse(task=task, processed=True)
+    with (
+        patch("lolibot.telegram.message_handler.process_user_message", return_value=task_response),
+        patch("lolibot.telegram.message_handler.save_task_to_db"),
+    ):
+        await message_handler(update, context)
+
+    update.message.reply_markdown_v2.assert_called_once()
+    update.message.reply_text.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_message_handler_fallback(bot_config):
+    update = MagicMock()
+    context = MagicMock()
+    context.application.bot_data = {"config": bot_config}
+    update.message.text = "do something"
+    update.message.reply_markdown_v2 = AsyncMock(side_effect=Exception("fail"))
+    update.message.reply_text = AsyncMock()
+    # Simulate a successful task response
+    task = TaskData(task_type="task", title="Test", description="desc", date="2025-05-23", time="12:00", invitees=["me"])
+    task_response = TaskResponse(task=task, processed=True)
+    with (
+        patch("lolibot.telegram.message_handler.process_user_message", return_value=task_response),
+        patch("lolibot.telegram.message_handler.save_task_to_db"),
+    ):
+        await message_handler(update, context)
+    update.message.reply_markdown_v2.assert_called_once()
+    update.message.reply_text.assert_called_once()

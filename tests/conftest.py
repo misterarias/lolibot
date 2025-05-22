@@ -18,12 +18,13 @@ def bot_config(tmp_path):
             default_timezone = "UTC"
             telegram_feedback_chat_id = "123456"
             current_context = "work"
+            telegram_bot_token = "test-token"
+
 
             [context.work]
             openai_api_key = "test_openai_key"
             gemini_api_key = "test_gemini_key"
             claude_api_key = "test_claude_key"
-            telegram_bot_token = "test-token"
             default_invitees = ["me"]
             """
         )

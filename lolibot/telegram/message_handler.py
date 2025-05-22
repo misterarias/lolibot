@@ -3,27 +3,28 @@ from lolibot.db import save_task_to_db
 from lolibot.services.processor import TaskResponse, process_user_message
 from telegram import Update
 from telegram.ext import ContextTypes
-from .utils import escapeHtmlResponse
+from .utils import escapeMarkdownCharacters
 
 logger = logging.getLogger(__name__)
 
 
 def format_command(task_response: TaskResponse) -> str:
     if not task_response.processed:
-        response = "Error processing message 👎"
-    else:
-        time_date_str = (
-            f"- *{task_response.task.date}@{task_response.task.time}*" if task_response.task.date and task_response.task.time else ""
-        )
-        response = f"""\
+        return "Error processing message 👎"
+
+    time_date_str = f"{task_response.task.date}@{task_response.task.time}" if task_response.task.date and task_response.task.time else ""
+    if time_date_str != "":
+        time_date_str = f"{escapeMarkdownCharacters(' - ')} *{time_date_str}*"
+
+    response = f"""\
 {task_response.task.task_type.capitalize()} created 👍
 
-{escapeHtmlResponse(task_response.task.title)} {time_date_str}
+{escapeMarkdownCharacters(task_response.task.title)}{time_date_str}
 
-> {escapeHtmlResponse(task_response.task.description)}
+> {escapeMarkdownCharacters(task_response.task.description)}
 """
-        if task_response.task.invitees:
-            response += f"Invitees: {', '.join(task_response.task.invitees)}\n\n"
+    if task_response.task.invitees:
+        response += f"Invitees: {', '.join(task_response.task.invitees)}\n\n"
 
     logger.info(f"Formatted response: {response}")
     return response
