@@ -6,6 +6,30 @@ from lolibot.telegram.status_command import command as status_command
 from lolibot.telegram.get_context_command import command as get_context_command
 from lolibot.telegram.set_context_command import command as set_context_command
 from lolibot.telegram.error_handler import handler as error_handler
+from lolibot.telegram.bot import run_telegram_bot
+
+
+def test_bot_start_fails_no_token(test_config):
+    """Test that the bot fails to start without a token."""
+    config = test_config
+    with pytest.raises(SystemExit):
+        run_telegram_bot(config)
+
+
+def test_bot_start_with_good_config(bot_config):
+    """Test that the bot starts with a valid config."""
+    config = bot_config
+
+    with patch("lolibot.telegram.bot.create_application") as mock_create_app:
+        application = MagicMock()
+        mock_create_app.return_value = application
+
+        run_telegram_bot(config)
+
+        mock_create_app.assert_called_once_with(config)
+        application.add_handler.call_count == 6
+        application.add_error_handler.assert_called()
+        application.run_polling.assert_called_once()
 
 
 @pytest.mark.asyncio
