@@ -1,6 +1,6 @@
 [project]
 name = "lolibot"
-version = "0.6.2"
+version = "0.6.3"
 description = ""
 authors = [
     {name = "Juan Arias",email = "juan.arias.freire@gmail.com"}

@@ -84,6 +84,14 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_markdown_v2(response)
 
 
+def escapeHtmlResponse(response: str) -> str:
+    # Escapes Telegram MarkdownV2 special characters
+    # See: https://core.telegram.org/bots/api#markdownv2-style
+    for c in set(["_", "*", "[", "]", "(", ")", "~", "`", "#", "+", "-", "=", "|", "{", "}", ".", "!", "<", ">"]):
+        response = response.replace(c, f"\\{c}")
+    return response
+
+
 def format_task_response(task_response: TaskResponse) -> str:
     if not task_response.processed:
         response = "Error processing message 👎"
@@ -94,12 +102,14 @@ def format_task_response(task_response: TaskResponse) -> str:
         response = f"""\
 {task_response.task.task_type.capitalize()} created 👍
 
-{task_response.task.title} {time_date_str}
+{escapeHtmlResponse(task_response.task.title)} {time_date_str}
 
-> {task_response.task.description}
+> {escapeHtmlResponse(task_response.task.description)}
 """
         if task_response.task.invitees:
             response += f"Invitees: {', '.join(task_response.task.invitees)}\n\n"
+
+    logger.info(f"Formatted response: {response}")
     return response
 
 
