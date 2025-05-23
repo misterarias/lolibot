@@ -81,8 +81,7 @@ async def test_set_context_command_success(bot_config):
     context = MagicMock()
     context.application.bot_data = {"config": bot_config}
     update.message.reply_text = AsyncMock()
-    with patch("lolibot.config.change_context", return_value=bot_config):
-        await set_context_command(update, context)
+    await set_context_command(update, context)
     update.message.reply_text.assert_called()
 
 
@@ -93,8 +92,7 @@ async def test_set_context_command_error(bot_config):
     context = MagicMock()
     context.application.bot_data = {"config": bot_config}
     update.message.reply_text = AsyncMock()
-    with patch("lolibot.config.change_context", side_effect=Exception("fail")):
-        await set_context_command(update, context)
+    await set_context_command(update, context)
     update.message.reply_text.assert_called()
 
 

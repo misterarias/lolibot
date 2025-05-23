@@ -20,10 +20,18 @@ from lolibot.db import init_db
 
 def configure_logging(verbosity: int):
     """Configure logging based on verbosity level."""
-    level = logging.WARNING - 10 * verbosity
+    # Reset root logger
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
+    # Map verbosity to logging levels:
+    # 0 -> WARNING (30)
+    # 1 -> INFO (20)
+    # 2 -> DEBUG (10)
+    # 3 -> NOTSET (0)
+    level = max(logging.NOTSET, logging.WARNING - (verbosity * 10))
     logging.basicConfig(
-        format="[%(levelname)s] %(asctime)s - %(name)s - %(message)s",
-        level=level,
+        format="[%(levelname)s] %(asctime)s - %(name)s - %(message)s", level=level, force=True  # Force reconfiguration of the root logger
     )
 
     # Suppress some library logs unless we're at maximum verbosity
@@ -43,8 +51,8 @@ def configure_logging(verbosity: int):
 @click.option("-v", "--verbose", count=True, help="Increase verbosity (up to -vvv)")
 @click.option(
     "--config-path",
-    default=Path("config.toml"),
-    type=click.Path(exists=True),
+    default=str(Path("config.toml")),
+    type=click.Path(exists=True, path_type=Path),
     help="Path to the TOML configuration file",
 )
 @click.pass_context
@@ -57,9 +65,9 @@ def main(ctx, verbose, config_path):
     init_db()
 
     # Load the configuration
-    from lolibot.config import load_config
+    from lolibot.config import BotConfig
 
-    ctx.obj["config"] = load_config(config_path)
+    ctx.obj["config"] = BotConfig.from_file(config_path)
 
 
 # Add the CLI commands directly
