@@ -3,7 +3,7 @@
 import logging
 import click
 
-from lolibot.config import BotConfig, change_context
+from lolibot.config import BotConfig
 from lolibot.db import save_task_to_db
 from lolibot.services import processor
 from lolibot.services.status import StatusType, status_service
@@ -80,7 +80,7 @@ def change_context_command(ctx, context_name: str):
     """Change the current context of the bot and persist it."""
     config: BotConfig = ctx.obj["config"]
     try:
-        change_context(context_name, config)
+        config.change_context(context_name)
         click.secho(f"Context changed to '{context_name}'", fg="green")
     except ValueError as e:
         click.secho(f"Error: {e}", fg="red")

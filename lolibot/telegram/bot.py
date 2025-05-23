@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_application(config: BotConfig) -> Application:
-    application = Application.builder().token(config.telegram_token).build()
+    application = Application.builder().token(config.telegram_bot_token).build()
     application.bot_data["config"] = config
 
     return application
@@ -31,7 +31,7 @@ def create_application(config: BotConfig) -> Application:
 def run_telegram_bot(config: BotConfig):  # noqa
     """Start the Telegram bot."""
     # Check bot token
-    if not config.telegram_token:
+    if not config.telegram_bot_token:
         logger.error("No Telegram bot token provided in config.")
         sys.exit(1)
 

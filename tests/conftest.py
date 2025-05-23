@@ -3,7 +3,7 @@
 import pytest
 import logging
 
-from lolibot.config import BotConfig, load_config
+from lolibot.config import BotConfig
 from lolibot.llm.base import LLMProvider
 from lolibot.llm.default import DefaultProvider
 
@@ -29,7 +29,7 @@ def bot_config(tmp_path):
             """
         )
 
-    return load_config(config_path)
+    return BotConfig.from_file(config_path)
 
 
 @pytest.fixture
@@ -51,7 +51,7 @@ def multi_contexts_config(tmp_path):
             """
         )
 
-    return load_config(config_path)
+    return BotConfig.from_file(config_path)
 
 
 @pytest.fixture()
@@ -68,7 +68,7 @@ def test_config(tmp_path) -> BotConfig:
             """
         )
 
-    return load_config(config_path)
+    return BotConfig.from_file(config_path)
 
 
 @pytest.fixture(autouse=True)

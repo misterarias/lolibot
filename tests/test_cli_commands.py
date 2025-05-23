@@ -1,6 +1,6 @@
 from click.testing import CliRunner
 from lolibot.cli.commands import change_context_command
-from lolibot.config import BotConfig, load_config
+from lolibot.config import BotConfig
 
 
 def test_change_context(multi_contexts_config: BotConfig):
@@ -19,5 +19,5 @@ def test_change_context(multi_contexts_config: BotConfig):
     assert result2.exit_code == 0
     assert "Context changed to 'personal'" in result2.output
 
-    updated = load_config(multi_contexts_config.config_path)
+    updated = BotConfig.from_file(multi_contexts_config.config_path)
     assert updated.current_context == "personal"

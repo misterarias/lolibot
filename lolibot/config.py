@@ -11,10 +11,8 @@ import tomli_w
 logger = logging.getLogger(__name__)
 
 
-@dataclass()
-class BotConfig:
-    """Bot configuration loaded from TOML file."""
-
+@dataclass
+class Config:
     # Name of current configuration context
     current_context: str
 
@@ -24,45 +22,90 @@ class BotConfig:
     # current configuration contexts
     contexts: dict = None
 
-    # Name of the bot, will be appended to messages
     @property
-    def bot_name(self) -> str:
-        return self.contexts[self.current_context].get("bot_name")
+    def available_contexts(self) -> list:
+        return [c for c in self.contexts.keys() if c != "default"]
 
-    # Default timezone for bot-created events
-    @property
-    def default_timezone(self) -> str:
-        return self.contexts[self.current_context].get("default_timezone")
+    def to_file(self):
+        """Save the current configuration to the configuration file."""
+        if self.config_path is None:
+            raise ValueError("Configuration path is not set.")
 
-    # Telegram chat ID for relaying telegram exceptions to.
-    @property
-    def telegram_feedback_chat_id(self) -> str:
-        return self.contexts[self.current_context].get("telegram_feedback_chat_id", None)
+        if not self.config_path.exists():
+            self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # API key for OpenAI ChatGPT
-    @property
-    def openai_api_key(self) -> str:
-        return self.contexts[self.current_context].get("openai_api_key", None)
+        # Default context is actually the base configuration
+        flat_config = dict(self.contexts["default"])
+        flat_config["current_context"] = self.current_context
+        contexts = {context_name: context_config for context_name, context_config in self.contexts.items() if context_name != "default"}
+        flat_config["context"] = contexts
+        with open(self.config_path, "wb") as f:
+            tomli_w.dump(flat_config, f)
 
-    # API key for Gemini Flash
-    @property
-    def gemini_api_key(self) -> str:
-        return self.contexts[self.current_context].get("gemini_api_key", None)
+    @classmethod
+    def from_file(cls, config_path: Path = Path("config.toml")) -> "Config":
+        """Load configuration from TOML file.
+        Args:
+            config_path: Path to the TOML configuration file
 
-    # API key for Claude
-    @property
-    def claude_api_key(self) -> str:
-        return self.contexts[self.current_context].get("claude_api_key", None)
+        Returns:
+            Config object with the loaded configuration of the appropriate class type
+        """
+        if not config_path.exists():
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        with open(config_path, "rb") as f:
+            lolibot_config = tomli.load(f)
 
-    # Telegram bot token
-    @property
-    def telegram_token(self) -> str:
-        return self.contexts[self.current_context].get("telegram_bot_token", None)
+        current_context = lolibot_config.get("current_context", "default")
+        all_contexts = lolibot_config.get("context", {})
+        if "default" in all_contexts:
+            raise ValueError("Context 'default' is not allowed as a explicit configuration context.")
 
-    # List of default invitees for the bot
-    @property
-    def default_invitees(self) -> list:
-        return self.contexts[self.current_context].get("default_invitees", [])
+        # default context is the one that is used if no context is specified
+        default_context = dict(lolibot_config)
+        for key in ["current_context", "context"]:
+            if key in default_context:
+                del default_context[key]
+        contexts = {"default": default_context}
+        for context_name, context_config in all_contexts.items():
+            contexts[context_name] = context_config
+
+        return cls(contexts=contexts, config_path=config_path, current_context=current_context)
+
+    def change_context(self, new_context: str):
+        """Save new context to the configuration file. 'default' is not allowed if other contexts exist."""
+        switchable = self.available_contexts
+        if new_context not in switchable:
+            raise ValueError(f"Context '{new_context}' not found in available contexts.")
+
+        if new_context == "default":
+            raise ValueError("Context 'default' is not allowed as a explicit configuration context.")
+
+        self.current_context = new_context
+        self.to_file()
+
+    def __getattribute__(self, name):
+        try:
+            # First try normal attribute lookup
+            return super().__getattribute__(name)
+        except AttributeError:
+            # If that fails, try our dynamic config lookup
+            contexts = super().__getattribute__("contexts")
+            current_context = super().__getattribute__("current_context")
+
+            # Check if the attribute exists in the current context
+            if name in contexts[current_context]:
+                return contexts[current_context][name]
+            # Check if the attribute exists in the default context
+            elif name in contexts["default"]:
+                return contexts["default"][name]
+
+        # phew----
+        return None
+
+
+class BotConfig(Config):
+    """Bot configuration loaded from TOML file."""
 
     def get_creds_path(self) -> Path:
         """Get the path to the credentials file based on current context."""
@@ -71,57 +114,3 @@ class BotConfig:
         if not creds_path.exists():
             creds_path.mkdir(parents=True, exist_ok=True)
         return creds_path
-
-    @property
-    def available_contexts(self) -> list:
-        return [c for c in self.contexts.keys() if c != "default"]
-
-
-def load_config(config_path: Path = Path("config.toml")) -> BotConfig:
-    """Load configuration from TOML file.
-    Args:
-        config_path: Path to the TOML configuration file
-
-    Returns:
-        BotConfig object with the loaded configuration
-    """
-    if not config_path.exists():
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    with open(config_path, "rb") as f:
-        lolibot_config = tomli.load(f)
-
-    current_context = lolibot_config.get("current_context", "default")
-    all_contexts = lolibot_config.get("context", {})
-    if "default" in all_contexts:
-        raise ValueError("Context 'default' is not allowed as a explicit configuration context.")
-
-    # default context is the one that is used if no context is specified
-    default_context = dict(lolibot_config)
-    for key in ["current_context", "context"]:
-        if key in default_context:
-            del default_context[key]
-    contexts = {"default": default_context}
-
-    # merge default context with all contexts
-    for _context in all_contexts.keys():
-        context_config = {**default_context, **all_contexts[_context]}
-        contexts[_context] = context_config
-
-    return BotConfig(contexts=contexts, config_path=config_path, current_context=current_context)
-
-
-def change_context(new_context: str, config: BotConfig) -> BotConfig:
-    """Save new context to the configuration file. 'default' is not allowed if other contexts exist."""
-    switchable = config.available_contexts
-    if new_context not in switchable:
-        raise ValueError(f"Context '{new_context}' not found in available contexts.")
-
-    if new_context == "default":
-        raise ValueError("Context 'default' is not allowed as a explicit configuration context.")
-
-    with open(config.config_path, "rb") as f:
-        config_data = tomli.load(f)
-    config_data["current_context"] = new_context
-    with open(config.config_path, "wb") as f:
-        tomli_w.dump(config_data, f)
-    return load_config(config.config_path)
