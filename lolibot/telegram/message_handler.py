@@ -9,25 +9,39 @@ logger = logging.getLogger(__name__)
 
 
 def format_command(task_response: TaskResponse) -> str:
-    if not task_response.processed:
-        return "Error processing message 👎"
+    """Format a task response into a Markdown message for Telegram."""
+    # Start with a summary
+    total = len(task_response.messages)  # Total attempted tasks
+    success = sum(1 for p in task_response.processed if p)
+    response = [f"Processed {success} of {total} tasks 👍" if success else "No tasks were created 👎"]
 
-    time_date_str = f"{task_response.task.date}@{task_response.task.time}" if task_response.task.date and task_response.task.time else ""
-    if time_date_str != "":
-        time_date_str = f"{escapeMarkdownCharacters(' - ')} *{time_date_str}*"
+    # Add each task's feedback message
+    response.extend(f"\n{escapeMarkdownCharacters(msg)}" for msg in task_response.messages)
 
-    response = f"""\
-{task_response.task.task_type.capitalize()} created 👍
+    # Add details for successful tasks
+    for i, (task, was_processed) in enumerate(zip(task_response.tasks, task_response.processed)):
+        if not was_processed:
+            continue
 
-{escapeMarkdownCharacters(task_response.task.title)}{time_date_str}
+        time_date_str = ""
+        if task.date and task.time:
+            time_date_str = f"{escapeMarkdownCharacters(' - ')} *{task.date}@{task.time}*"
 
-> {escapeMarkdownCharacters(task_response.task.description)}
-"""
-    if task_response.task.invitees:
-        response += f"Invitees: {', '.join(task_response.task.invitees)}\n\n"
+        response.extend(
+            [
+                f"\n{escapeMarkdownCharacters('─' * 30)}",
+                f"\n{task.task_type.capitalize()}:",
+                f"\n{escapeMarkdownCharacters(task.title)}{time_date_str}",
+                f"\n> {escapeMarkdownCharacters(task.description)}",
+            ]
+        )
 
-    logger.info(f"Formatted response: {response}")
-    return response
+        if task.invitees:
+            response.append(f"\nInvitees: {escapeMarkdownCharacters(', '.join(task.invitees))}")
+
+    result = "".join(response)
+    logger.info(f"Formatted response: {result}")
+    return result
 
 
 async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -43,8 +57,9 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     task_response = process_user_message(config, user_message)
 
-    # Store info in the database
-    save_task_to_db(user_id, user_message, task_response.task, task_response.processed)
+    # Store info in the database for each task
+    for task, was_processed in zip(task_response.tasks, task_response.processed):
+        save_task_to_db(user_id, user_message, task, was_processed)
 
     # render a nice response using HTML
     response = format_command(task_response)
