@@ -10,6 +10,7 @@ from lolibot.services.status import status_service
 def format_command(status_list: List[StatusItem]) -> str:
     info_messages = "\n".join(f"ℹ️ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.INFO)
     ok_messages = "\n".join(f"✅ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.OK)
+    warning_messages = "\n".join(f"⚠️ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.WARNING)
     err_messages = "\n".join(f"❌ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.ERROR)
     extra = ""
     if not err_messages:
@@ -20,6 +21,7 @@ def format_command(status_list: List[StatusItem]) -> str:
     return f"""
 {info_messages}
 {ok_messages}
+{warning_messages}
 {err_messages}
 
 {extra}

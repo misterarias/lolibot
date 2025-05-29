@@ -81,3 +81,27 @@ def setup_logging():
 def provider(test_config) -> LLMProvider:
     """Create a DefaultProvider instance for testing."""
     return DefaultProvider(test_config)
+
+
+@pytest.fixture()
+def provider_factory() -> LLMProvider:
+    def create_provider(connected=True, enabled=True) -> LLMProvider:
+        class Dummy(LLMProvider):
+            def __init__(self, config: BotConfig):
+                pass
+
+            def name(self):
+                return "Dummy"
+
+            def process_text(self, text):
+                pass
+
+            def check_connection(self):
+                return connected
+
+            def enabled(self):
+                return enabled
+
+        return Dummy(test_config)
+
+    return create_provider

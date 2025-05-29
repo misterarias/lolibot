@@ -9,6 +9,7 @@ class StatusType(Enum):
     OK = "ok"
     ERROR = "error"
     INFO = "info"
+    WARNING = "warning"
 
 
 @dataclass(frozen=True)

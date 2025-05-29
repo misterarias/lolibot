@@ -16,7 +16,7 @@ class GeminiProvider(LLMProvider):
     """Google Gemini LLM provider."""
 
     def name(self):
-        return "Gemini"
+        return "Gemini Flash 2.5"
 
     def enabled(self) -> bool:
         """Check if the Gemini provider is enabled."""

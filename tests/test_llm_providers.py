@@ -42,4 +42,4 @@ def test_anthropic_provider_name(test_config):
 
 def test_gemini_provider_name(test_config):
     p = GeminiProvider(test_config)
-    assert p.name() == "Gemini"
+    assert p.name() == "Gemini Flash 2.5"

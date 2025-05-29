@@ -61,6 +61,8 @@ def status_command(ctx):
             click.secho(f"✓ {status_item.name}", fg="green")
         elif status_item.status_type == StatusType.ERROR:
             click.secho(f"✗ {status_item.name}", fg="red")
+        elif status_item.status_type == StatusType.WARNING:
+            click.secho(f"⚠️ {status_item.name}", fg="yellow")
         else:
             click.secho(f"{status_item.name}", fg="yellow")
 
