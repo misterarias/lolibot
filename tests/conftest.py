@@ -1,5 +1,6 @@
 """Pytest configuration file."""
 
+import random
 import pytest
 import logging
 
@@ -91,7 +92,7 @@ def provider_factory() -> LLMProvider:
                 pass
 
             def name(self):
-                return "Dummy"
+                return f"Dummy-{random.randint(1, 1000)}"
 
             def process_text(self, text):
                 pass
