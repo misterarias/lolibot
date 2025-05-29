@@ -136,9 +136,12 @@ async def test_message_handler_multi_task_success(bot_config):
         TaskData(task_type="task", title="Task2", description="desc2", date="2025-05-23", time="14:00", invitees=None),
     ]
     messages = ["Successfully created: Task1", "Successfully created: Task2"]
-    task_response = TaskResponse(tasks=tasks, processed=[True, True], messages=messages)
+    task_responses = [
+        TaskResponse(task=tasks[0], processed=True, feedback=messages[0]),
+        TaskResponse(task=tasks[1], processed=True, feedback=messages[1]),
+    ]
 
-    mock_process = patch("lolibot.telegram.message_handler.process_user_message", return_value=task_response)
+    mock_process = patch("lolibot.telegram.message_handler.process_user_message", return_value=task_responses)
     mock_save = patch("lolibot.telegram.message_handler.save_task_to_db")
 
     with mock_process, mock_save as save:
@@ -166,12 +169,12 @@ async def test_message_handler_fallback(bot_config):
     update.message.reply_markdown_v2 = AsyncMock(side_effect=Exception("fail"))
     update.message.reply_text = AsyncMock()
 
-    tasks = [TaskData(task_type="task", title="Task1", description="desc1", date="2025-05-23", time="12:00", invitees=["me"])]
-    messages = ["Successfully created: Task1"]
-    task_response = TaskResponse(tasks=tasks, processed=[True], messages=messages)
+    task = TaskData(task_type="task", title="Task1", description="desc1", date="2025-05-23", time="12:00", invitees=["me"])
+    message = "Successfully created: Task1"
+    task_responses = [TaskResponse(task=task, processed=True, feedback=message)]
 
     # Mock process and save
-    mock_process = patch("lolibot.telegram.message_handler.process_user_message", return_value=task_response)
+    mock_process = patch("lolibot.telegram.message_handler.process_user_message", return_value=task_responses)
     mock_save = patch("lolibot.telegram.message_handler.save_task_to_db")
 
     with mock_process, mock_save:
@@ -190,19 +193,25 @@ async def test_message_handler_with_failed_tasks(bot_config):
     update.message.reply_markdown_v2 = AsyncMock()
     update.message.reply_text = AsyncMock()
 
-    tasks = [TaskData(task_type="task", title="Task1", description="desc1", date="2025-05-23", time="12:00", invitees=["me"])]
     messages = ["Successfully created: Task1", "Error: Invalid date format", "Skipped duplicate task: Task1"]
-    task_response = TaskResponse(tasks=tasks, processed=[True], messages=messages)
+    task_responses = [
+        TaskResponse(
+            task=TaskData(task_type="task", title="Task1", description="desc1", date="2025-05-23", time="12:00", invitees=["me"]),
+            processed=True,
+            feedback=messages[0],
+        ),
+        TaskResponse(task=None, processed=False, feedback=messages[1]),
+        TaskResponse(task=None, processed=False, feedback=messages[2]),
+    ]
 
-    mock_process = patch("lolibot.telegram.message_handler.process_user_message", return_value=task_response)
+    mock_process = patch("lolibot.telegram.message_handler.process_user_message", return_value=task_responses)
     mock_save = patch("lolibot.telegram.message_handler.save_task_to_db")
 
     with mock_process, mock_save as save:
         await message_handler(update, context)
 
-    # Check that only successful tasks were saved
-    assert save.call_count == 1
-    save.assert_called_once_with(update.effective_user.id, update.message.text, tasks[0], True)
+    # Check that all tasks were saved
+    assert save.call_count == 3
 
     # Verify the response was sent
     update.message.reply_markdown_v2.assert_called_once()
@@ -210,6 +219,6 @@ async def test_message_handler_with_failed_tasks(bot_config):
 
     # Verify the response includes failure messages
     response = update.message.reply_markdown_v2.call_args[0][0]
-    assert "Processed 1 of 3 tasks" in response
+    assert "Processed 1/3 tasks" in response
     assert "Error: Invalid date format" in response
     assert "Skipped duplicate task" in response

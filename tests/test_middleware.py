@@ -9,6 +9,8 @@ from lolibot.services import TaskData
 import pytest
 from datetime import datetime, timedelta
 
+from lolibot.services.middleware.test_message_check import TestCheckerMiddleware
+
 
 def test_not_task_middleware_ignores_tasks():
     mw = NotTaskMiddleWare()
@@ -190,3 +192,23 @@ def test_title_prefix_truncate_long():
     assert result.title.startswith("Bot ")
     assert result.title.endswith("...")
     assert len(result.title) < 70  # 50 + len("Bot ") + ...
+
+
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("Too short", False),
+        ("Too short...", False),
+        ("shorter", False),
+        ("estas ahi?", False),
+        ("this is a test message", True),
+        ("", False),
+    ],
+)
+def test_suspicious_words_mw(message, expected):
+    mw = TestCheckerMiddleware()
+    if not expected:
+        with pytest.raises(ValueError):
+            mw.process(message, None)
+    else:
+        assert mw.process(message, None) != ""

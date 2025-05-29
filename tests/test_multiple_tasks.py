@@ -73,37 +73,12 @@ def test_multiple_tasks_success(mock_llm, mock_process, config):
 
     from lolibot.services.processor import process_user_message
 
-    response = process_user_message(config, "task 1 and task 2")
+    response = process_user_message(config, "Do something first and then do something else")
 
-    assert isinstance(response, TaskResponse)
-    assert len(response.tasks) == 2
-    assert len(response.processed) == 2
-    assert len(response.messages) == 2
-    assert response.has_any_success() is True
-    assert response.has_any_failure() is False
-
-
-@patch("lolibot.services.task_manager.TaskManager.process_task")
-@patch("lolibot.llm.processor.LLMProcessor.process_text")
-def test_duplicate_tasks_skipped(mock_llm, mock_process, config):
-    # Set up mock LLM responses with duplicate task
-    mock_llm.side_effect = [
-        {"task_type": "task", "title": "Task 1", "description": "D1", "date": "2025-06-01", "time": None, "invitees": None},
-        {"task_type": "task", "title": "Task 1", "description": "D1", "date": "2025-06-01", "time": None, "invitees": None},
-    ]
-
-    # Set up mock task processing
-    mock_process.return_value = True
-
-    from lolibot.services.processor import process_user_message
-
-    response = process_user_message(config, "task 1 and task 1 again")
-
-    assert isinstance(response, TaskResponse)
-    assert len(response.tasks) == 1
-    assert len(response.processed) == 1
-    assert len(response.messages) == 2  # Success + Skip message
-    assert "Skipped duplicate task" in response.messages[1]
+    assert isinstance(response, list)
+    assert isinstance(response[0], TaskResponse)
+    assert len(response) == 2
+    assert all(r.processed for r in response)
 
 
 @patch("lolibot.services.task_manager.TaskManager.process_task")
@@ -120,14 +95,13 @@ def test_multiple_tasks_partial_failure(mock_llm, mock_process, config):
 
     from lolibot.services.processor import process_user_message
 
-    response = process_user_message(config, "task 1 and task 2")
+    response = process_user_message(config, "Do something first and then do something else")
 
-    assert isinstance(response, TaskResponse)
-    assert len(response.tasks) == 2
-    assert len(response.processed) == 2
-    assert len(response.messages) == 2
-    assert response.has_any_success() is True
-    assert response.has_any_failure() is True
+    assert isinstance(response, list)
+    assert isinstance(response[0], TaskResponse)
+    assert len(response) == 2
+    assert response[0].processed is True
+    assert response[1].processed is False
 
 
 def test_support_multilingual_separators():

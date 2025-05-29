@@ -1,4 +1,5 @@
 import logging
+from typing import List
 from lolibot.db import save_task_to_db
 from lolibot.services.processor import TaskResponse, process_user_message
 from telegram import Update
@@ -8,36 +9,43 @@ from .utils import escapeMarkdownCharacters
 logger = logging.getLogger(__name__)
 
 
-def format_command(task_response: TaskResponse) -> str:
+def format_command(task_responses: List[TaskResponse]) -> str:
     """Format a task response into a Markdown message for Telegram."""
     # Start with a summary
-    total = len(task_response.messages)  # Total attempted tasks
-    success = sum(1 for p in task_response.processed if p)
-    response = [f"Processed {success} of {total} tasks 👍" if success else "No tasks were created 👎"]
+    total = len(task_responses)  # Total attempted tasks
+    success = sum(1 for p in task_responses if p.processed)  # Count successful tasks
+    response = [f"Processed {success}/{total} tasks 👍" if success else "No tasks were created 👎\n"]
 
     # Add each task's feedback message
-    response.extend(f"\n{escapeMarkdownCharacters(msg)}" for msg in task_response.messages)
+    # response.extend(f"\n{escapeMarkdownCharacters(r.feedback)}" for r in task_responses)
 
     # Add details for successful tasks
-    for i, (task, was_processed) in enumerate(zip(task_response.tasks, task_response.processed)):
-        if not was_processed:
+    for task_response in task_responses:
+        if not task_response.processed:
             continue
 
+        task = task_response.task
         time_date_str = ""
-        if task.date and task.time:
+        if task.task_type == "event":
             time_date_str = f"{escapeMarkdownCharacters(' - ')} *{task.date}@{task.time}*"
 
         response.extend(
             [
-                f"\n{escapeMarkdownCharacters('─' * 30)}",
-                f"\n{task.task_type.capitalize()}:",
+                f"\n{escapeMarkdownCharacters('─' * 20)}",
                 f"\n{escapeMarkdownCharacters(task.title)}{time_date_str}",
-                f"\n> {escapeMarkdownCharacters(task.description)}",
             ]
         )
+        if len(task.description) > 20:
+            response.append(f"\n> {escapeMarkdownCharacters(task.description)}")
 
         if task.invitees:
             response.append(f"\nInvitees: {escapeMarkdownCharacters(', '.join(task.invitees))}")
+
+    # Add details for failed tasks
+    for task_response in task_responses:
+        if task_response.processed or not task_response.feedback:
+            continue
+        response.append(f"\n> {escapeMarkdownCharacters(task_response.feedback)}")
 
     result = "".join(response)
     logger.info(f"Formatted response: {result}")
@@ -55,14 +63,14 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     config = context.application.bot_data.get("config")
 
-    task_response = process_user_message(config, user_message)
+    task_responses = process_user_message(config, user_message)
 
     # Store info in the database for each task
-    for task, was_processed in zip(task_response.tasks, task_response.processed):
-        save_task_to_db(user_id, user_message, task, was_processed)
+    for response in task_responses:
+        save_task_to_db(user_id, user_message, response.task, response.processed)
 
     # render a nice response using HTML
-    response = format_command(task_response)
+    response = format_command(task_responses)
 
     # try to send the response as HTML first
     try:
