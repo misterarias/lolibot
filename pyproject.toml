@@ -1,6 +1,6 @@
 [project]
 name = "lolibot"
-version = "0.10.0"
+version = "1.0.0"
 description = ""
 authors = [
     {name = "Juan Arias",email = "juan.arias.freire@gmail.com"}
@@ -51,3 +51,5 @@ benchmark = true
 omit = [
     "tests/*"
 ]
+
+[tool.poetry_bumpversion.file."lolibot/__init__.py"]

@@ -11,13 +11,16 @@ from lolibot.services import StatusItem, StatusType
 def status_service(config: BotConfig) -> List[StatusItem]:
     status_list = [
         StatusItem(f"Bot Name: {config.bot_name}", status_type=StatusType.INFO),
+        StatusItem(f"Bot version: {config.version}", status_type=StatusType.INFO),
         StatusItem(f"Active context: {config.current_context}", status_type=StatusType.INFO),
     ]
 
     # Check LLM providers
     llm_processor = LLMProcessor(config)
     for provider in llm_processor.providers:
-        if provider.check_connection():
+        if not provider.enabled():
+            item = StatusItem(f"{provider.name()} DISABLED", status_type=StatusType.WARNING)
+        elif provider.check_connection():
             item = StatusItem(f"{provider.name()} API", status_type=StatusType.OK)
         else:
             item = StatusItem(f"{provider.name()} API", status_type=StatusType.ERROR)

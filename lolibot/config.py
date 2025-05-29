@@ -5,6 +5,7 @@ import logging
 from typing import Optional
 import tomli
 from pathlib import Path
+from lolibot import __version__
 
 import tomli_w
 
@@ -106,6 +107,11 @@ class Config:
 
 class BotConfig(Config):
     """Bot configuration loaded from TOML file."""
+
+    @property
+    def version(self) -> str:
+        """Get the version of the bot."""
+        return __version__
 
     def get_creds_path(self) -> Path:
         """Get the path to the credentials file based on current context."""
