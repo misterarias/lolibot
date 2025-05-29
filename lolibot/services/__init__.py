@@ -39,3 +39,12 @@ class TaskData:
             time=data.get("time"),
             invitees=data.get("invitees"),
         )
+
+
+@dataclass
+class TaskResponse:
+    """Response from processing a task."""
+
+    task: TaskData
+    processed: bool = False
+    feedback: Optional[str] = None
