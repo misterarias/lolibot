@@ -5,26 +5,28 @@ from telegram.ext import ContextTypes
 
 from lolibot.services import StatusItem, StatusType
 from lolibot.services.status import status_service
+from lolibot.telegram.utils import escapeMarkdownCharacters
 
 
 def format_command(status_list: List[StatusItem]) -> str:
-    info_messages = "\n".join(f"ℹ️ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.INFO)
-    ok_messages = "\n".join(f"✅ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.OK)
-    warning_messages = "\n".join(f"⚠️ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.WARNING)
-    err_messages = "\n".join(f"❌ {status_item.name}" for status_item in status_list if status_item.status_type == StatusType.ERROR)
-    extra = ""
-    if not err_messages:
-        extra = "All systems are operational 😊"
-    elif not ok_messages:
-        extra = "All systems are DOWN ☹️"
+    info_messages = "\n".join(
+        f"ℹ️ {escapeMarkdownCharacters(status_item.name)}" for status_item in status_list if status_item.status_type == StatusType.INFO
+    )
+    ok_messages = "\n".join(
+        f"✅ {escapeMarkdownCharacters(status_item.name)}" for status_item in status_list if status_item.status_type == StatusType.OK
+    )
+    warning_messages = "\n".join(
+        f"⚠️ {escapeMarkdownCharacters(status_item.name)}" for status_item in status_list if status_item.status_type == StatusType.WARNING
+    )
+    err_messages = "\n".join(
+        f"❌ {escapeMarkdownCharacters(status_item.name)}" for status_item in status_list if status_item.status_type == StatusType.ERROR
+    )
 
     return f"""
 {info_messages}
 {ok_messages}
 {warning_messages}
 {err_messages}
-
-{extra}
 """
 
 

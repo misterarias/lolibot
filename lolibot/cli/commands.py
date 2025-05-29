@@ -63,8 +63,10 @@ def status_command(ctx):
             click.secho(f"✗ {status_item.name}", fg="red")
         elif status_item.status_type == StatusType.WARNING:
             click.secho(f"⚠️ {status_item.name}", fg="yellow")
+        elif status_item.status_type == StatusType.INFO:
+            click.secho(f"{status_item.name}", fg="blue")
         else:
-            click.secho(f"{status_item.name}", fg="yellow")
+            click.secho(f"{status_item.name} (unknown status)", fg="magenta")
 
 
 @click.command(name="telegram")

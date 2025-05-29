@@ -1,3 +1,4 @@
+import time
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch, call
 from lolibot.services import TaskData
@@ -54,14 +55,43 @@ async def test_help_command(bot_config):
 
 
 @pytest.mark.asyncio
-async def test_status_command(bot_config):
+async def test_status_command(bot_config, provider_factory):
     update = MagicMock()
     context = MagicMock()
-    context.application.bot_data = {"config": bot_config, "start_time": 0}
+    context.application.bot_data = {"config": bot_config, "start_time": time.time() - 1}
     update.message.reply_markdown_v2 = AsyncMock()
-    with patch("lolibot.services.status.status_service", return_value=[]):
+
+    # TODO - mock google services
+    google_services_mock = patch("lolibot.services.status.get_google_service", autospec=True)
+    google_services_mock.return_value = lambda c, s: type(
+        "S",
+        (),
+        {
+            "events": lambda self: type("E", (), {"list": lambda self, **k: type("R", (), {"execute": lambda self: {}})()})(),
+            "tasklists": lambda self: type(
+                "T", (), {"list": lambda self, **k: type("R", (), {"execute": lambda self: {"items": [{}]}})()}
+            )(),
+        },
+    )()
+
+    # Patch LLMProcessor and get_google_service to always OK
+    providers_mock = MagicMock()
+    providers_mock.providers = [
+        provider_factory(True, True),  # OK
+        provider_factory(True, False),  # KO
+        provider_factory(False, True),  # Warning
+        provider_factory(False, False),  # Warning
+    ]
+    llm_procesor_mock = patch("lolibot.services.status.LLMProcessor", autospec=True, return_value=providers_mock)
+
+    with llm_procesor_mock, google_services_mock:
         await status_command(update, context)
     update.message.reply_markdown_v2.assert_called_once()
+    status_message = update.message.reply_markdown_v2.call_args[0][0]
+    assert "Uptime: 0h 0m 1s" in status_message
+    assert "❌ " in status_message
+    assert "✅ " in status_message
+    assert "⚠️ " in status_message
 
 
 @pytest.mark.asyncio
