@@ -35,7 +35,13 @@ def test_save_task_to_db(tmp_path):
         time = "10:00"
         invitees = ["a@example.com"]
 
-    dbmod.save_task_to_db("u1", "msg", DummyTask(), True)
+    class DummyTaskResponse:
+        def __init__(self):
+            self.task = DummyTask()
+            self.processed = True
+            self.feedback = "Task saved successfully"
+
+    dbmod.save_task_to_db("u1", "msg", DummyTaskResponse())
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM tasks WHERE user_id=?", ("u1",))

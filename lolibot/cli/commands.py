@@ -3,35 +3,16 @@
 import logging
 import click
 
+from lolibot import UserMessage
 from lolibot.config import BotConfig
-from lolibot.db import save_task_to_db
-from lolibot.services import processor
+from lolibot.services import TaskResponse, processor
 from lolibot.services.status import StatusType, status_service
 from lolibot.telegram.bot import run_telegram_bot
 
 logger = logging.getLogger(__name__)
 
 
-@click.command(name="apunta")
-@click.argument("text", nargs=-1)
-@click.pass_context
-def apunta_command(ctx, text):
-    """Create a task, event, or reminder using natural language.
-
-    TEXT is your natural language description of what you want to create.
-    For example: "Schedule a meeting with John tomorrow at 2pm"
-    """
-    config = ctx.obj["config"]
-
-    # Process the text using LLM
-    text = " ".join(text)
-    logger.debug(f"Processing text: {text}")
-
-    task_response = processor.process_user_message(config, text)
-
-    # Store info in the database
-    save_task_to_db("cli_user", text, task_response.task, task_response.processed)
-
+def click_secho_task_response(task_response: TaskResponse):
     # render a nice response using click
     if not task_response.processed:
         click.secho("Error processing message 👎", fg="red")
@@ -48,6 +29,29 @@ def apunta_command(ctx, text):
     if task_response.task.invitees:
         response += f"Invitees: {', '.join(task_response.task.invitees)}\n\n"
     click.echo(response)
+
+
+@click.command(name="apunta")
+@click.argument("text", nargs=-1)
+@click.pass_context
+def apunta_command(ctx, text):
+    """Create a task, event, or reminder using natural language.
+
+    TEXT is your natural language description of what you want to create.
+    For example: "Schedule a meeting with John tomorrow at 2pm"
+    """
+    config = ctx.obj["config"]
+
+    # Process the text using LLM
+    text = " ".join(text)
+
+    user_message = UserMessage(message=text, user_id="cli_user")
+    logger.debug(f"Processing {user_message}...")
+    task_responses = processor.process_user_message(config, user_message)
+
+    # Format and print the response
+    for task_response in task_responses:
+        click_secho_task_response(task_response)
 
 
 @click.command(name="status")

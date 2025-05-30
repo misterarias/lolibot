@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch
 from lolibot.services.task_manager import TaskManager
-from lolibot.services import TaskData
+from lolibot.services import TaskData, UnknownTaskException
 
 
 @pytest.fixture
@@ -38,8 +38,7 @@ def test_process_task_creates_task(mock_create, config):
     assert mock_create.called
 
 
-@patch("lolibot.services.task_manager.create_reminder", return_value="r123")
-def test_process_reminder(mock_create, config):
+def test_process_invalid_task_type(config):
     tm = TaskManager(config)
     data = TaskData(
         task_type="reminder",
@@ -49,9 +48,8 @@ def test_process_reminder(mock_create, config):
         time="09:00",
         invitees=None,
     )
-    resp = tm.process_task(data)
-    assert resp is True
-    assert mock_create.called
+    with pytest.raises(UnknownTaskException):
+        tm.process_task(data)
 
 
 @patch("lolibot.services.task_manager.create_task", return_value=None)

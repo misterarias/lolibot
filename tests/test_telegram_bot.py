@@ -1,6 +1,6 @@
 import time
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
 from lolibot.services import TaskData
 from lolibot.services.processor import TaskResponse
 from lolibot.telegram.start_command import command as start_command
@@ -172,22 +172,10 @@ async def test_message_handler_multi_task_success(bot_config):
     ]
 
     mock_process = patch("lolibot.telegram.message_handler.process_user_message", return_value=task_responses)
-    mock_save = patch("lolibot.telegram.message_handler.save_task_to_db")
-
-    with mock_process, mock_save as save:
+    with mock_process:
         await message_handler(update, context)
 
     update.message.reply_markdown_v2.assert_called_once()
-    update.message.reply_text.assert_not_called()
-
-    # Verify each task was saved
-    assert save.call_count == 2
-    save.assert_has_calls(
-        [
-            call(update.effective_user.id, update.message.text, tasks[0], True),
-            call(update.effective_user.id, update.message.text, tasks[1], True),
-        ]
-    )
 
 
 @pytest.mark.asyncio
@@ -205,9 +193,7 @@ async def test_message_handler_fallback(bot_config):
 
     # Mock process and save
     mock_process = patch("lolibot.telegram.message_handler.process_user_message", return_value=task_responses)
-    mock_save = patch("lolibot.telegram.message_handler.save_task_to_db")
-
-    with mock_process, mock_save:
+    with mock_process:
         await message_handler(update, context)
 
     update.message.reply_markdown_v2.assert_called_once()
@@ -235,15 +221,9 @@ async def test_message_handler_with_failed_tasks(bot_config):
     ]
 
     mock_process = patch("lolibot.telegram.message_handler.process_user_message", return_value=task_responses)
-    mock_save = patch("lolibot.telegram.message_handler.save_task_to_db")
-
-    with mock_process, mock_save as save:
+    with mock_process:
         await message_handler(update, context)
 
-    # Check that all tasks were saved
-    assert save.call_count == 3
-
-    # Verify the response was sent
     update.message.reply_markdown_v2.assert_called_once()
     update.message.reply_text.assert_not_called()
 
