@@ -4,7 +4,7 @@ import logging
 import sqlite3
 import os
 
-from lolibot.services import TaskData
+from lolibot.services import TaskResponse
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +40,12 @@ def init_db():
     conn.close()
 
 
-def save_task_to_db(user_id, message, task_data: TaskData, result_ok=False):
+def save_task_to_db(user_id, message, task_response: TaskResponse):
     """Save task information to the local database."""
     conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
     logger.debug("Saving task to database...")
-
+    task_data = task_response.task
     cursor.execute(
         """
         INSERT INTO tasks (
@@ -53,7 +53,16 @@ def save_task_to_db(user_id, message, task_data: TaskData, result_ok=False):
             task_date, task_time, processed
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (user_id, message, task_data.task_type, task_data.title, task_data.description, task_data.date, task_data.time, result_ok),
+        (
+            user_id,
+            message,
+            task_data.task_type,
+            task_data.title,
+            task_data.description,
+            task_data.date,
+            task_data.time,
+            task_response.processed,
+        ),
     )
     logger.debug("Task saved to database with ID: %s", cursor.lastrowid)
 

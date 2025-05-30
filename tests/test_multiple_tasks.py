@@ -3,7 +3,8 @@
 import pytest
 from unittest.mock import patch
 
-from lolibot.services.processor import TaskResponse, split_into_tasks
+from lolibot import UserMessage
+from lolibot.services.processor import TaskResponse, process_user_message, split_into_tasks
 
 
 @pytest.fixture
@@ -59,21 +60,22 @@ def test_split_task_preserves_time():
     assert "call mom at 11:15" in segments
 
 
-@patch("lolibot.services.task_manager.TaskManager.process_task")
-@patch("lolibot.llm.processor.LLMProcessor.process_text")
-def test_multiple_tasks_success(mock_llm, mock_process, config):
+def test_multiple_tasks_success(config):
     # Set up mock LLM responses
-    mock_llm.side_effect = [
-        {"task_type": "task", "title": "Task 1", "description": "D1", "date": "2025-06-01", "time": None, "invitees": None},
-        {"task_type": "task", "title": "Task 2", "description": "D2", "date": "2025-06-01", "time": None, "invitees": None},
-    ]
+    patch_llm = patch(
+        "lolibot.llm.processor.LLMProcessor.process_text",
+        side_effect=[
+            {"task_type": "task", "title": "Task 1", "description": "D1", "date": "2025-06-01", "time": None, "invitees": None},
+            {"task_type": "task", "title": "Task 2", "description": "D2", "date": "2025-06-01", "time": None, "invitees": None},
+        ],
+    )
 
     # Set up mock task processing
-    mock_process.return_value = True
+    patch_process = patch("lolibot.services.task_manager.TaskManager.process_task", autospec=True, side_effect=[True, True])
+    user_message = UserMessage(message="Do something first and then do something else", user_id="test_user")
 
-    from lolibot.services.processor import process_user_message
-
-    response = process_user_message(config, "Do something first and then do something else")
+    with patch_llm, patch_process:
+        response = process_user_message(config, user_message)
 
     assert isinstance(response, list)
     assert isinstance(response[0], TaskResponse)
@@ -81,21 +83,21 @@ def test_multiple_tasks_success(mock_llm, mock_process, config):
     assert all(r.processed for r in response)
 
 
-@patch("lolibot.services.task_manager.TaskManager.process_task")
-@patch("lolibot.llm.processor.LLMProcessor.process_text")
-def test_multiple_tasks_partial_failure(mock_llm, mock_process, config):
-    # Set up mock LLM responses
-    mock_llm.side_effect = [
-        {"task_type": "task", "title": "Task 1", "description": "D1", "date": "2025-06-01", "time": None, "invitees": None},
-        {"task_type": "task", "title": "Task 2", "description": "D2", "date": "2025-06-01", "time": None, "invitees": None},
-    ]
+def test_multiple_tasks_partial_failure(config):
+    patch_llm = patch(
+        "lolibot.llm.processor.LLMProcessor.process_text",
+        side_effect=[
+            {"task_type": "task", "title": "Task 1", "description": "D1", "date": "2025-06-01", "time": None, "invitees": None},
+            {"task_type": "task", "title": "Task 2", "description": "D2", "date": "2025-06-01", "time": None, "invitees": None},
+        ],
+    )
 
-    # Set up mock task processing - first succeeds, second fails
-    mock_process.side_effect = [True, False]
+    # Set up mock task processing where one task fails
+    patch_process = patch("lolibot.services.task_manager.TaskManager.process_task", autospec=True, side_effect=[True, False])
 
-    from lolibot.services.processor import process_user_message
-
-    response = process_user_message(config, "Do something first and then do something else")
+    user_message = UserMessage(message="Do something first and then do something else", user_id="test_user")
+    with patch_llm, patch_process:
+        response = process_user_message(config, user_message)
 
     assert isinstance(response, list)
     assert isinstance(response[0], TaskResponse)

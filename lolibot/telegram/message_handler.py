@@ -1,6 +1,6 @@
 import logging
 from typing import List
-from lolibot.db import save_task_to_db
+from lolibot import UserMessage
 from lolibot.services.processor import TaskResponse, process_user_message
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -54,9 +54,10 @@ def format_command(task_responses: List[TaskResponse]) -> str:
 
 async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Process incoming messages."""
-    user_message = update.message.text
+    message = update.message.text
     user_id = update.effective_user.id
-    logger.debug(f"Received message from user {user_id}: {user_message}")
+    user_message = UserMessage(message=message, user_id=user_id)
+    logger.debug(f"Received {user_message}...")
 
     # Inform the user that we're processing their message
     # await update.message.reply_text("Procesando...")
@@ -64,10 +65,6 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     config = context.application.bot_data.get("config")
 
     task_responses = process_user_message(config, user_message)
-
-    # Store info in the database for each task
-    for response in task_responses:
-        save_task_to_db(user_id, user_message, response.task, response.processed)
 
     # render a nice response using HTML
     response = format_command(task_responses)

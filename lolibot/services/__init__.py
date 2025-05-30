@@ -1,6 +1,13 @@
 from dataclasses import dataclass
+from datetime import date
 from enum import Enum
 from typing import List, Optional
+
+
+class UnknownTaskException(Exception):
+    """Exception raised for unknown task types."""
+
+    pass
 
 
 class StatusType(Enum):
@@ -24,10 +31,24 @@ class TaskData:
 
     task_type: str
     title: str
-    description: str
-    date: str
-    time: str
+    description: Optional[str] = None
+    date: Optional[str] = None
+    time: Optional[str] = None
     invitees: Optional[List[str]] = None
+
+    @staticmethod
+    def from_error(error_message: str) -> "TaskData":
+        """Create a TaskData instance from an error message."""
+        now = date.today()
+        return TaskData.from_dict(
+            {
+                "task_type": "error",
+                "title": error_message,
+                "description": "",
+                "date": now.strftime("%Y-%m-%d"),
+                "time": now.strftime("%H:%M:%s"),
+            }
+        )
 
     @staticmethod
     def from_dict(data: dict) -> "TaskData":
@@ -35,10 +56,10 @@ class TaskData:
         return TaskData(
             task_type=data.get("task_type"),
             title=data.get("title"),
-            description=data.get("description"),
-            date=data.get("date"),
-            time=data.get("time"),
-            invitees=data.get("invitees"),
+            description=data.get("description", None),
+            date=data.get("date", None),
+            time=data.get("time", None),
+            invitees=data.get("invitees", []),
         )
 
 

@@ -8,3 +8,4 @@ taskbot.db
 .coverage
 coverage.xml
 htmlcov/
+data

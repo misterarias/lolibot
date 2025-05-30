@@ -1,7 +1,13 @@
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 
-class UnknownTaskException(Exception):
-    """Exception raised for unknown task types."""
+from dataclasses import dataclass
 
-    pass
+
+@dataclass(frozen=True)
+class UserMessage:
+    message: str
+    user_id: str
+
+    def __str__(self):
+        return f"UserMessage: {self.message} (User ID: {self.user_id})"
