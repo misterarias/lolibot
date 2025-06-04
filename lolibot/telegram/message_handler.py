@@ -27,9 +27,12 @@ def format_command(task_responses: List[TaskResponse]) -> List[str]:
         task = task_response.task
         time_date_str = ""
         if task.task_type == "event":
-            time_date_str = f"{escapeMarkdownCharacters(' - ')} *{task.date}@{task.time}*"
+            date = escapeMarkdownCharacters(task.date)
+            time = escapeMarkdownCharacters(task.time)
+            time_date_str = f", *{date}@{time}h*"
 
-        responses.append(f"\n✅ {escapeMarkdownCharacters(task.title)}{time_date_str}")
+        title = escapeMarkdownCharacters(task.title)
+        responses.append(f"\n✅ {title}{time_date_str}")
 
     # Add details for failed tasks
     for task_response in task_responses:

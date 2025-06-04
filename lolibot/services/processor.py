@@ -79,6 +79,7 @@ def process_task_segment(
         raw_task_data = llm_processor.process_text(segment)
         task_data = TaskData.from_dict(raw_task_data)
         processed_data = pipeline.process(segment, task_data)
+        logger.debug(f"Processed task data: {processed_data}")
         task_processed_ok = task_manager.process_task(processed_data)
 
         msg = f"Successfully created: {processed_data.title}" if task_processed_ok else f"Failed to create: {processed_data.title}"

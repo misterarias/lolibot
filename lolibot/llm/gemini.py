@@ -37,30 +37,29 @@ class GeminiProvider(LLMProvider):
         """Process text with Google Gemini API."""
         today = datetime.now().date()
         prompt = f"""\
-You are a helpful assistant.
-Please provide a JSON response to the following request: '{text}'
+You are a helpful assistant, your task is to extract a task or event from the text provided.
+A task is something that needs to be done, an event is something that happens at a specific date and, optionally, time.
 
-Text represents something i need to do. Default 'task_type' to 'task'.
+Please provide a JSON response to the following request: '{text}' with only the following keys:
 
-DO NOT CREATE ANY EVENT OR TASK. Just return the JSON object.
+"task_type" can only be 'task' or 'event'.
+"title" is a summary you create from the text.
+"description" is the full text provided, it can be empty if not specified, and can be enhanced with expanded dates or locations.
+"date" is either "YYYY-MM-DD" or null if no date is specified.
+"time" is either "HH:MM" or null if no time is specified.
+"duration" is the duration in minutes of the event, if any. Default to 30 minutes
+
+
+NEVER CREATE ANY EVENT OR TASK.
+Always return a JSON object.
 For date, extract date from event. Date can come in many formats, such as: 17/07/2024, 7 de Julio, el próximo martes....
+If text contains "tomorrow", "next week", "next month", "next year", or similar, use {today} + 1 day, 7 days, 30 days, 365 days...
 
 Use {today} if no date specified.
 Time can be AM/PM or 24-hour format.
 Time can end on "h", such as 12:00h, that is 24-hour format. No ending suffix for time is 24-hour format.
-If a time and date is set, task_type should be 'event'.
-
-task_type can only be 'task' or 'event'.
-
-Never ever return a date before {today}, use null instead.
-Return ONLY a JSON object with:
-{{
-    "task_type": "'task' or 'event' as especified",
-    "title": "brief title, max 6 words",
-    "description": "detailed description",
-    "date": "YYYY-MM-DD or null",
-    "time": "HH:MM or null"
-}}"""
+It is illegal to return an empty or invalid date for events.
+"""
         response = requests.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self.__api_key}",
             headers={"Content-Type": "application/json"},
@@ -73,5 +72,7 @@ Return ONLY a JSON object with:
         # Extract the JSON from the text
         match = re.search(r"{.*}", content, re.DOTALL)
         if match:
-            return json.loads(match.group(0))
+            json_date = json.loads(match.group(0))
+            logger.info(f"Extracted JSON: {json_date}")
+            return json_date
         raise Exception("Failed to extract JSON from response")

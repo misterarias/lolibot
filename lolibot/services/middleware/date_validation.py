@@ -4,6 +4,8 @@ from lolibot.services import TaskData
 
 class DateValidationMiddleware:
     def process(self, message: str, data: TaskData) -> TaskData:
+        if data.task_type == "event" and not data.date:
+            raise ValueError("Event tasks must have a date specified.")
         if data.date:
             try:
                 task_date = datetime.strptime(data.date, "%Y-%m-%d").date()
