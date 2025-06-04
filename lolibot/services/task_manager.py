@@ -17,6 +17,7 @@ class TaskManager:
     def process_task(self, task_data: TaskData) -> bool:
         """Process a task and create it in the appropriate service."""
         google_id = None
+        logger.info(f"Processing task: {task_data}")
         if task_data.task_type == "task":
             google_id = create_task(self.config, task_data)
         elif task_data.task_type == "event":

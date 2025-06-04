@@ -10,11 +10,6 @@ class TitlePrefixTruncateMiddleware:
         if len(title) > 50:
             title = title[:50] + "..."
         title = f"{self.bot_name} {title}"
-        return TaskData(
-            task_type=data.task_type,
-            title=title,
-            description=data.description,
-            date=data.date,
-            time=data.time,
-            invitees=data.invitees,
-        )
+
+        data.title = title
+        return data

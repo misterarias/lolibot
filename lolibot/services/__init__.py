@@ -25,7 +25,7 @@ class StatusItem:
     status_type: StatusType
 
 
-@dataclass(frozen=True)
+@dataclass()
 class TaskData:
     """Data structure for task information."""
 
@@ -35,6 +35,7 @@ class TaskData:
     date: Optional[str] = None
     time: Optional[str] = None
     invitees: Optional[List[str]] = None
+    duration: Optional[int] = None
 
     @staticmethod
     def from_error(error_message: str) -> "TaskData":
@@ -47,6 +48,8 @@ class TaskData:
                 "description": "",
                 "date": now.strftime("%Y-%m-%d"),
                 "time": now.strftime("%H:%M:%s"),
+                "invitees": [],
+                "duration": 30,
             }
         )
 
@@ -60,6 +63,7 @@ class TaskData:
             date=data.get("date", None),
             time=data.get("time", None),
             invitees=data.get("invitees", []),
+            duration=data.get("duration", None),
         )
 
 

@@ -109,6 +109,11 @@ class BotConfig(Config):
     """Bot configuration loaded from TOML file."""
 
     @property
+    def default_event_duration(self) -> int:
+        """Get the default event duration in minutes."""
+        return self.contexts[self.current_context].get("default_event_duration", 30)
+
+    @property
     def version(self) -> str:
         """Get the version of the bot."""
         return __version__
