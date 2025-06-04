@@ -88,7 +88,8 @@ def create_calendar_event(config: BotConfig, event_data: TaskData):
 
         # Set the start and end times
         start_time = event_data.time if event_data.time else "09:00"
-        start_datetime = f"{event_data.date}T{start_time}:00"
+        start_date = event_data.date if event_data.date else datetime.now().date().isoformat()
+        start_datetime = f"{start_date}T{start_time}:00"
 
         # Default event duration: 30 minutes
         end_datetime = datetime.fromisoformat(start_datetime)

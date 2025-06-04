@@ -8,6 +8,14 @@ from lolibot.services.processor import TaskResponse, process_user_message, split
 
 
 @pytest.fixture
+def day_in_the_future():
+    """Fixture to provide a date in the future for testing."""
+    from datetime import datetime, timedelta
+
+    return (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+
+
+@pytest.fixture
 def config():
     class DummyConfig:
         bot_name = "TestBot"
@@ -60,13 +68,12 @@ def test_split_task_preserves_time():
     assert "call mom at 11:15" in segments
 
 
-def test_multiple_tasks_success(config):
-    # Set up mock LLM responses
+def test_multiple_tasks_success(config, day_in_the_future):
     patch_llm = patch(
         "lolibot.llm.processor.LLMProcessor.process_text",
         side_effect=[
-            {"task_type": "task", "title": "Task 1", "description": "D1", "date": "2025-06-01", "time": None, "invitees": None},
-            {"task_type": "task", "title": "Task 2", "description": "D2", "date": "2025-06-01", "time": None, "invitees": None},
+            {"task_type": "task", "title": "Task 1", "description": "D1", "date": day_in_the_future, "time": None, "invitees": None},
+            {"task_type": "task", "title": "Task 2", "description": "D2", "date": day_in_the_future, "time": None, "invitees": None},
         ],
     )
 
@@ -83,12 +90,12 @@ def test_multiple_tasks_success(config):
     assert all(r.processed for r in response)
 
 
-def test_multiple_tasks_partial_failure(config):
+def test_multiple_tasks_partial_failure(config, day_in_the_future):
     patch_llm = patch(
         "lolibot.llm.processor.LLMProcessor.process_text",
         side_effect=[
-            {"task_type": "task", "title": "Task 1", "description": "D1", "date": "2025-06-01", "time": None, "invitees": None},
-            {"task_type": "task", "title": "Task 2", "description": "D2", "date": "2025-06-01", "time": None, "invitees": None},
+            {"task_type": "task", "title": "Task 1", "description": "D1", "date": day_in_the_future, "time": None, "invitees": None},
+            {"task_type": "task", "title": "Task 2", "description": "D2", "date": day_in_the_future, "time": None, "invitees": None},
         ],
     )
 
