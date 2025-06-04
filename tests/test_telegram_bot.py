@@ -175,7 +175,7 @@ async def test_message_handler_multi_task_success(bot_config):
     with mock_process:
         await message_handler(update, context)
 
-    update.message.reply_markdown_v2.assert_called_once()
+    assert update.message.reply_markdown_v2.call_count == 3
 
 
 @pytest.mark.asyncio
@@ -196,8 +196,8 @@ async def test_message_handler_fallback(bot_config):
     with mock_process:
         await message_handler(update, context)
 
-    update.message.reply_markdown_v2.assert_called_once()
-    update.message.reply_text.assert_called_once()
+    assert update.message.reply_markdown_v2.call_count == 2
+    assert update.message.reply_text.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -224,11 +224,12 @@ async def test_message_handler_with_failed_tasks(bot_config):
     with mock_process:
         await message_handler(update, context)
 
-    update.message.reply_markdown_v2.assert_called_once()
+    assert update.message.reply_markdown_v2.call_count == 4
     update.message.reply_text.assert_not_called()
 
     # Verify the response includes failure messages
-    response = update.message.reply_markdown_v2.call_args[0][0]
+    response = " ".join(c[0][0] for c in update.message.reply_markdown_v2.await_args_list)
     assert "Processed 1/3 tasks" in response
-    assert "Error: Invalid date format" in response
-    assert "Skipped duplicate task" in response
+    assert "✅ Task1" in response
+    assert "❌ Error: Invalid date format" in response
+    assert "❌ Skipped duplicate task" in response
