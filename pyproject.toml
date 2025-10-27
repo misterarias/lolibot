@@ -53,3 +53,4 @@ omit = [
 ]
 
 [tool.poetry_bumpversion.file."lolibot/__init__.py"]
+[tool.poetry_bumpversion.file."Dockerfile"]
