@@ -31,3 +31,8 @@ class LLMProvider(abc.ABC):
     def enabled(self) -> bool:
         """Check if the LLM provider is enabled."""
         pass
+
+    @abc.abstractmethod
+    def split_text(self, text) -> list:
+        """Split text into smaller chunks if needed."""
+        pass

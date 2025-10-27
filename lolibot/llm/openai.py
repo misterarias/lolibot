@@ -17,6 +17,9 @@ class OpenAIProvider(LLMProvider):
     def name(self) -> str:
         return "OpenAI"
 
+    def split_text(self, text) -> list:
+        raise NotImplementedError("OpenAIProvider does not implement split_text")
+
     def enabled(self) -> bool:
         """Check if the provider is enabled."""
         return self.__api_key is not None
