@@ -19,3 +19,13 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error changing context: {e}")
         await update.message.reply_text(f"❌ Error changing context: {e}")
+
+    # Attempt to update the Telegram bot display name to include the new context.
+    try:
+        base_name = getattr(config, "bot_name", None) or "Bot"
+        new_name = f"{base_name} ({context_name})"
+        await context.application.bot.set_my_name(name=new_name)
+        # await update.message.reply_text(f"✅ Bot name updated to: {new_name}")
+    except Exception as e:  # pragma: no cover - best-effort API call
+        logger.warning(f"Could not update bot name: {e}")
+        # await update.message.reply_text(f"⚠️ Could not update bot name: {e}")
