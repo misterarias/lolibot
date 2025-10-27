@@ -18,6 +18,9 @@ class AnthropicProvider(LLMProvider):
     def name(self):
         return "Anthropic"
 
+    def split_text(self, text) -> list:
+        raise NotImplementedError("Anthropic does not implement split_text")
+
     def enabled(self) -> bool:
         """Check if the provider is enabled."""
         return self.__api_key is not None
