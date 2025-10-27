@@ -1,6 +1,8 @@
 import os
 import sqlite3
 
+from lolibot.services import TaskData, TaskResponse
+
 
 def test_init_db_creates_table(tmp_path):
     db_path = tmp_path / "test.db"
@@ -27,7 +29,7 @@ def test_save_task_to_db(tmp_path):
         db_path.unlink()
     dbmod.init_db()
 
-    class DummyTask:
+    class DummyTask(TaskData):
         task_type = "task"
         title = "T"
         description = "D"
@@ -35,7 +37,10 @@ def test_save_task_to_db(tmp_path):
         time = "10:00"
         invitees = ["a@example.com"]
 
-    class DummyTaskResponse:
+        def __init__(self):
+            pass
+
+    class DummyTaskResponse(TaskResponse):
         def __init__(self):
             self.task = DummyTask()
             self.processed = True
