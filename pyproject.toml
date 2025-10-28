@@ -17,7 +17,7 @@ python-dotenv="1.2.1"
 pytz= "2025.2"
 python-telegram-bot = "22.5"
 click = "^8.3.0"
-tomli = "^2.2.1"
+tomli = "^2.3.0"
 tomli-w = "^1.2.0"
 
 [tool.poetry]
