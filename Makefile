@@ -1,4 +1,7 @@
-test: 
+check:
+	@poetry run pytest -m "not slow" --last-failed -x  --quiet --durations=20
+
+test: style
 	@poetry run coverage run -m pytest -v 
 	@poetry run coverage report --fail-under 70 -m
 

@@ -63,6 +63,7 @@ def test_main_help(cli_runner):
     assert "--verbose" in result.output
 
 
+@pytest.mark.slow
 def test_main_with_config(cli_runner, temp_config, monkeypatch):
     """Test main command with config file."""
     monkeypatch.setattr("builtins.print", lambda x: None)  # Suppress print output
@@ -79,6 +80,7 @@ def test_main_invalid_config(cli_runner, tmp_path):
     assert "does not exist" in result.output
 
 
+@pytest.mark.slow
 def test_verbosity_levels(cli_runner, temp_config):
     """Test different verbosity levels."""
     # Test with increasing verbosity
