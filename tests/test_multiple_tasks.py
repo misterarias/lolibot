@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import patch
 
 from lolibot import UserMessage
-from lolibot.services.processor import TaskResponse, process_user_message, split_into_tasks
+from lolibot.services.processor import TaskResponse, process_user_message
 
 
 @pytest.fixture
@@ -31,41 +31,6 @@ def config():
         config_path = None
 
     return DummyConfig()
-
-
-def test_split_task_with_comma():
-    text = "Buy milk, call mom, send email"
-    segments = split_into_tasks(text)
-    assert len(segments) == 3
-    assert "Buy milk" in segments
-    assert "call mom" in segments
-    assert "send email" in segments
-
-
-def test_split_task_with_spanish_y():
-    text = "Comprar leche y llamar a mamá y enviar email"
-    segments = split_into_tasks(text)
-    assert len(segments) == 3
-    assert "Comprar leche" in segments
-    assert "llamar a mamá" in segments
-    assert "enviar email" in segments
-
-
-def test_split_task_with_english_and():
-    text = "Buy milk and call mom and send email"
-    segments = split_into_tasks(text)
-    assert len(segments) == 3
-    assert "Buy milk" in segments
-    assert "call mom" in segments
-    assert "send email" in segments
-
-
-def test_split_task_preserves_time():
-    text = "Meeting at 10:30, call mom at 11:15"
-    segments = split_into_tasks(text)
-    assert len(segments) == 2
-    assert "Meeting at 10:30" in segments
-    assert "call mom at 11:15" in segments
 
 
 def test_multiple_tasks_success(config, day_in_the_future):
@@ -111,13 +76,3 @@ def test_multiple_tasks_partial_failure(config, day_in_the_future):
     assert len(response) == 2
     assert response[0].processed is True
     assert response[1].processed is False
-
-
-def test_support_multilingual_separators():
-    text = "Buy milk y call mom, enviar email además " "schedule meeting and send report also create task"
-    segments = split_into_tasks(text)
-    assert len(segments) == 6  # Fixed: The expected list had 6 items
-    expected = ["Buy milk", "call mom", "enviar email", "schedule meeting", "send report", "create task"]
-    assert len(expected) == len(segments)
-    for task in expected:
-        assert any(task in segment for segment in segments)

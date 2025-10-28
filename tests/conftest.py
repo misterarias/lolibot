@@ -85,7 +85,7 @@ def provider(test_config) -> LLMProvider:
 
 
 @pytest.fixture()
-def provider_factory() -> LLMProvider:
+def provider_factory(test_config) -> LLMProvider:
     def create_provider(connected=True, enabled=True) -> LLMProvider:
         class Dummy(LLMProvider):
             def __init__(self, config: BotConfig):
@@ -94,7 +94,10 @@ def provider_factory() -> LLMProvider:
             def name(self):
                 return f"Dummy-{random.randint(1, 1000)}"
 
-            def process_text(self, text):
+            def process_text(self, text) -> dict:
+                pass
+
+            def split_text(self, text) -> list:
                 pass
 
             def check_connection(self):
