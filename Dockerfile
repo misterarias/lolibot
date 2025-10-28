@@ -27,7 +27,7 @@ COPY README.md ./
 RUN poetry install --no-interaction
 
 # Version label for Docker image
-LABEL version="0.1.0"
+LABEL version="1.1.0"
 
 # Default entrypoint
 ENTRYPOINT ["poetry", "run", "loli", "telegram"]
