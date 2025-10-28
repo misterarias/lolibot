@@ -23,9 +23,9 @@ def config():
         contact_aliases = {"bob": "bob@example.com"}
         context_name = "default"
         default_timezone = "UTC"
-        openai_api_key = "key"
-        gemini_api_key = "key"
-        claude_api_key = "key"
+        openai_api_key = None
+        gemini_api_key = None
+        claude_api_key = None
         telegram_bot_token = "token"
         available_contexts = ["default"]
         config_path = None

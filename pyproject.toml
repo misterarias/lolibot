@@ -32,7 +32,7 @@ flake8-pyproject = "^1.2.3"
 pytest = "^8.3.5"
 coverage = "^7.8.0"
 bandit = "^1.8.3"
-pytest-asyncio = "^0.26.0"
+pytest-asyncio = "^1.2.0"
 pytest-cov = "^4.1.0"
 
 [build-system]
@@ -54,3 +54,8 @@ omit = [
 
 [tool.poetry_bumpversion.file."lolibot/__init__.py"]
 [tool.poetry_bumpversion.file."Dockerfile"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+]
