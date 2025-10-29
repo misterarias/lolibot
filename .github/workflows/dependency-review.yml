@@ -3,9 +3,6 @@ name: Dependency review
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  schedule:
-    - cron: '0 4 * * *' # daily at 04:00 UTC
-
 
 permissions:
   contents: read
